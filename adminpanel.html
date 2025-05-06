@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Panel</title>
+  <style>
+    button {
+      display: block;
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 16px;
+    }
+    input {
+      padding: 5px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+<h1>Панель администратора</h1>
+
+<button onclick="resetVotingStatuses()">Сбросить статус голосования всем пользователям</button>
+
+<button onclick="deleteAllUsers()">Удалить всех пользователей (включая localStorage)</button>
+
+<h3>Удаление пользователя по Civil Number</h3>
+<input type="text" id="civilInput" placeholder="Введите гражданский номер">
+<button onclick="deleteUserByCivilnumber()">Удалить пользователя</button>
+
+<script>
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (
+    !user ||
+    user.civilnumber !== '00010' ||
+    user.fullname !== 'Мярьянов Вадим Маркович' ||
+    user.status !== 'approved'
+  ) {
+    window.location.href = 'index.html';
+  }
+
+  function resetVotingStatuses() {
+      const allUsers = JSON.parse(localStorage.getItem('allUsers')) || [];
+
+      // Обновляем всех пользователей в LocalStorage
+      allUsers.forEach(user => {
+          if (user.votingStatus === 'vote') {
+              user.votingStatus = 'novote';
+          }
+      });
+
+      // Обновляем все данные в LocalStorage
+      localStorage.setItem('allUsers', JSON.stringify(allUsers));
+      console.log("Голосование для всех пользователей сброшено в LocalStorage.");
+
+      // Отправляем запрос на сервер для обновления всех пользователей с votingStatus = 'vote'
+      fetch('https://github-io-dqp7.onrender.com/api/update-voting-status', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              console.log(`${data.message} На сервере.`);
+          } else {
+              console.log("Ошибка при сбросе голосования на сервере.");
+          }
+      })
+      .catch(error => {
+          console.error("Ошибка при запросе на сервер:", error);
+      });
+  }
+
+
+  function deleteAllUsers() {
+    if (confirm('Вы уверены, что хотите удалить ВСЕХ пользователей?')) {
+      fetch('https://github-io-dqp7.onrender.com/api/users', {
+        method: 'DELETE'
+      })
+        .then(response => response.json())
+        .then(data => {
+          alert(data.message);
+          localStorage.clear();
+        })
+        .catch(err => alert('Ошибка: ' + err));
+    }
+  }
+
+
+  function deleteUserByCivilnumber() {
+    const civil = document.getElementById('civilInput').value.trim();
+    if (!civil) return alert('Введите гражданский номер');
+
+    fetch(`https://github-io-dqp7.onrender.com/api/user/${civil}`, {
+      method: 'DELETE'
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(`Пользователь ${data.user.fullname} удалён`);
+
+          // Если в localStorage сохранён этот пользователь — удаляем только его
+          const currentUser = JSON.parse(localStorage.getItem('user'));
+          if (currentUser && currentUser.civilnumber === civil) {
+            localStorage.removeItem('user');
+          }
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch(err => alert('Ошибка: ' + err));
+  }
+
+</script>
+</body>
+</html>
