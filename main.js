@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const profileCard = document.getElementById('profile-card');
         if (!profileCard) return;
 
-        fetch(`http://localhost:3000/api/user-status/${user.civilnumber}`)
+        fetch(`https://voleriancecgithubio-production.up.railway.app/api/user-status/${user.civilnumber}`)
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (user.status === 'rejected') {
                 document.getElementById('resubmit-button').addEventListener('click', async () => {
-                    await fetch(`http://localhost:3000/api/user/${user.civilnumber}`, { method: 'DELETE' });
+                    await fetch(`https://voleriancecgithubio-production.up.railway.app/api/user/${user.civilnumber}`, { method: 'DELETE' });
                     localStorage.removeItem('user');
                     window.location.href = 'registration.html';
                 });
@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         localStorage.setItem('user', JSON.stringify(user));
                         avatarPreview.src = reader.result;
 
-                        fetch('http://localhost:3000/api/update-avatar', {
+                        fetch('https://voleriancecgithubio-production.up.railway.app/api/update-avatar', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ civilnumber: user.civilnumber, avatar: reader.result })
@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     return showError('Гражданский номер должен состоять из 5 цифр.');
                 }
 
-                fetch('http://localhost:3000/api/register', {
+                fetch('https://voleriancecgithubio-production.up.railway.app/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ fullname, civilnumber }),
@@ -292,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            const res = await fetch('http://localhost:3000/api/vote', {
+            const res = await fetch('https://voleriancecgithubio-production.up.railway.app/api/vote', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ civilnumber: user.civilnumber, option: selected.value })

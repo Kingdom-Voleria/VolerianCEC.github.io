@@ -54,7 +54,7 @@
       console.log("Голосование для всех пользователей сброшено в LocalStorage.");
 
       // Отправляем запрос на сервер для обновления всех пользователей с votingStatus = 'vote'
-      fetch('http://localhost:3000/api/update-voting-status', {
+      fetch('https://voleriancecgithubio-production.up.railway.app/api/update-voting-status', {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
@@ -76,7 +76,7 @@
 
   function deleteAllUsers() {
     if (confirm('Вы уверены, что хотите удалить ВСЕХ пользователей?')) {
-      fetch('http://localhost:3000/api/users', {
+      fetch('https://voleriancecgithubio-production.up.railway.app/api/users', {
         method: 'DELETE'
       })
         .then(response => response.json())
@@ -93,7 +93,7 @@
     const civil = document.getElementById('civilInput').value.trim();
     if (!civil) return alert('Введите гражданский номер');
 
-    fetch(`http://localhost:3000/api/user/${civil}`, {
+    fetch(`https://voleriancecgithubio-production.up.railway.app/api/user/${civil}`, {
       method: 'DELETE'
     })
       .then(response => response.json())
