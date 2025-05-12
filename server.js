@@ -231,35 +231,6 @@ app.post('/api/reset-voting-status', (req, res) => {
     res.json({ success: true, message: `Статусы голосования сброшены у ${updatedCount} пользователей.` });
 });
 
-// Middleware для защиты панели
-function requireAdminAuth(req, res, next) {
-  if (req.session && req.session.isAdmin) {
-    next();
-  } else {
-    res.redirect('/admin-login.html');
-  }
-}
-
-// Статическая отдача файлов
-app.use(express.static(path.join(__dirname, 'VolCEC'))); // если HTML в папке public
-
-// Логин администратора (POST)
-app.post('/api/admin-login', (req, res) => {
-  const { password } = req.body;
-
-  if (password === 'SuperSecret123') { // замените на безопасный пароль
-    req.session.isAdmin = true;
-    res.json({ success: true });
-  } else {
-    res.status(401).json({ success: false, message: 'Неверный пароль' });
-  }
-});
-
-// Отдача adminpanel.html только если залогинен
-app.get('/adminpanel.html', requireAdminAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'VolCEC', 'adminpanel.html'));
-});
-
 // -------------------- Запуск сервера --------------------
 app.listen(port, () => {
     console.log(`Сервер запущен на http://localhost:${port}`);
