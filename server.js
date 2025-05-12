@@ -1,12 +1,22 @@
 const express = require('express');
 const cors = require('cors');
+const session = require('express-session');
+const path = require('path');
 const Database = require('better-sqlite3');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Настройка middleware
 app.use(cors());
 app.use(express.json());
 
+app.use(session({
+  secret: 'super-secret-password', // замените на сложный секрет в продакшене
+  resave: false,
+  saveUninitialized: false
+}));
+
+// База данных
 const db = new Database('users.db');
 
 // Таблица пользователей
@@ -205,7 +215,46 @@ app.delete('/api/votes', (req, res) => {
     res.json({ success: true, message: 'Все результаты голосования были сброшены.' });
 });
 
-// Запуск сервера
+// Сброс статуса голосования у всех пользователей
+app.post('/api/reset-voting-status', (req, res) => {
+    const users = db.prepare('SELECT * FROM users').all();
+    let updatedCount = 0;
+
+    users.forEach(user => {
+        if (user.votingStatus === 'voted') {
+            db.prepare('UPDATE users SET votingStatus = ? WHERE civilnumber = ?').run('novote', user.civilnumber);
+            updatedCount++;
+        }
+    });
+
+    console.log(`Сброшено статусов голосования у ${updatedCount} пользователей.`);
+    res.json({ success: true, message: `Статусы голосования сброшены у ${updatedCount} пользователей.` });
+});
+
+// -------------------- Админ-панель --------------------
+const ADMIN_PASSWORD = '12345'; // замените на свой пароль
+
+app.post('/login-admin', (req, res) => {
+    const { password } = req.body;
+
+    if (password === ADMIN_PASSWORD) {
+        req.session.admin = true;
+        return res.json({ success: true });
+    }
+
+    res.status(401).json({ success: false, message: 'Неверный пароль' });
+});
+
+app.use('/adminpanel.html', (req, res, next) => {
+    if (req.session.admin) {
+        return next();
+    }
+    res.redirect('/admin-login.html');
+});
+
+app.use(express.static(path.join(__dirname, 'public'))); // папка со статикой
+
+// -------------------- Запуск сервера --------------------
 app.listen(port, () => {
     console.log(`Сервер запущен на http://localhost:${port}`);
 });

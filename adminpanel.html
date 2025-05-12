@@ -48,7 +48,7 @@
     }
 
     // Отправляем запрос на сервер для сброса голосов
-    fetch('http://localhost:3000/api/votes', {
+    fetch('http://localhost:3000/api/reset-voting-status', {
       method: 'DELETE'
     })
       .then(response => response.json())
