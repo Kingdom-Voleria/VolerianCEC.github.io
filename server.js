@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use(session({
-  secret: 'super-secret-password', // замените на сложный секрет в продакшене
+  secret: 'Da896573', // замените на сложный секрет в продакшене
   resave: false,
   saveUninitialized: false
 }));
