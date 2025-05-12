@@ -5,16 +5,12 @@ const path = require('path');
 const Database = require('better-sqlite3');
 const app = express();
 const port = process.env.PORT || 3000;
+const ADMIN_PASSWORD = 'Da896573'; // Лучше вынести в переменные окружения
 
 // Настройка middleware
 app.use(cors());
 app.use(express.json());
 
-app.use(session({
-  secret: 'Da896573', // замените на сложный секрет в продакшене
-  resave: false,
-  saveUninitialized: false
-}));
 
 // База данных
 const db = new Database('users.db');
@@ -231,28 +227,14 @@ app.post('/api/reset-voting-status', (req, res) => {
     res.json({ success: true, message: `Статусы голосования сброшены у ${updatedCount} пользователей.` });
 });
 
-// -------------------- Админ-панель --------------------
-const ADMIN_PASSWORD = '12345'; // замените на свой пароль
-
-app.post('/api/login-admin', (req, res) => {
+app.post('/api/check-password', (req, res) => {
     const { password } = req.body;
-
     if (password === ADMIN_PASSWORD) {
-        req.session.admin = true;
-        return res.json({ success: true });
+        res.json({ success: true });
+    } else {
+        res.json({ success: false });
     }
-
-    res.status(401).json({ success: false, message: 'Неверный пароль' });
 });
-
-app.use('/adminpanel.html', (req, res, next) => {
-    if (req.session.admin) {
-        return next();
-    }
-    res.redirect('/admin-login.html');
-});
-
-app.use(express.static(path.join(__dirname, 'public'))); // папка со статикой
 
 // -------------------- Запуск сервера --------------------
 app.listen(port, () => {
