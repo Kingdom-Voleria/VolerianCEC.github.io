@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin Panel</title>
   <style>
-    #adminPanel {
-      display: none;
-    }
     button {
       display: block;
       margin: 10px 0;
@@ -21,23 +18,15 @@
   </style>
 </head>
 <body>
+<h1>Панель администратора</h1>
 
-<div id="passwordContainer">
-  <h2>Введите пароль</h2>
-  <input type="password" id="adminPassword" placeholder="Пароль">
-  <button onclick="submitPassword()">Войти</button>
-</div>
+<button onclick="resetVotingStatuses()">Сбросить статус голосования всем пользователям</button>
 
-<div id="adminPanel">
-  <h1>Панель администратора</h1>
+<button onclick="deleteAllUsers()">Удалить всех пользователей (включая localStorage)</button>
 
-  <button onclick="resetVotingStatuses()">Сбросить статус голосования всем пользователям</button>
-  <button onclick="deleteAllUsers()">Удалить всех пользователей (включая localStorage)</button>
-
-  <h3>Удаление пользователя по Civil Number</h3>
-  <input type="text" id="civilInput" placeholder="Введите гражданский номер">
-  <button onclick="deleteUserByCivilnumber()">Удалить пользователя</button>
-</div>
+<h3>Удаление пользователя по Civil Number</h3>
+<input type="text" id="civilInput" placeholder="Введите гражданский номер">
+<button onclick="deleteUserByCivilnumber()">Удалить пользователя</button>
 
 <script>
   const user = JSON.parse(localStorage.getItem('user'));
@@ -50,33 +39,15 @@
     window.location.href = 'index.html';
   }
 
-  function submitPassword() {
-    const password = document.getElementById('adminPassword').value;
-
-    fetch('http://localhost:3000/api/check-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password })
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          document.getElementById('passwordContainer').style.display = 'none';
-          document.getElementById('adminPanel').style.display = 'block';
-        } else {
-          alert('Неверный пароль');
-        }
-      })
-      .catch(err => alert('Ошибка: ' + err));
-  }
-
   function resetVotingStatuses() {
+    // Обновляем votingStatus в localStorage, если нужно
     const storedUser = JSON.parse(localStorage.getItem('user'));
     if (storedUser && storedUser.votingStatus === 'vote') {
       storedUser.votingStatus = 'novote';
       localStorage.setItem('user', JSON.stringify(storedUser));
     }
 
+    // Отправляем запрос на сервер для сброса голосов
     fetch('http://localhost:3000/api/reset-voting-status', {
       method: 'DELETE'
     })
@@ -88,6 +59,8 @@
         alert('Ошибка при удалении голосов: ' + err);
       });
   }
+
+
 
   function deleteAllUsers() {
     if (confirm('Вы уверены, что хотите удалить ВСЕХ пользователей?')) {
@@ -103,6 +76,7 @@
     }
   }
 
+
   function deleteUserByCivilnumber() {
     const civil = document.getElementById('civilInput').value.trim();
     if (!civil) return alert('Введите гражданский номер');
@@ -114,6 +88,8 @@
       .then(data => {
         if (data.success) {
           alert(`Пользователь ${data.user.fullname} удалён`);
+
+          // Если в localStorage сохранён этот пользователь — удаляем только его
           const currentUser = JSON.parse(localStorage.getItem('user'));
           if (currentUser && currentUser.civilnumber === civil) {
             localStorage.removeItem('user');
@@ -124,7 +100,7 @@
       })
       .catch(err => alert('Ошибка: ' + err));
   }
-</script>
 
+</script>
 </body>
 </html>

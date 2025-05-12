@@ -5,12 +5,16 @@ const path = require('path');
 const Database = require('better-sqlite3');
 const app = express();
 const port = process.env.PORT || 3000;
-const ADMIN_PASSWORD = 'Da896573'; // Лучше вынести в переменные окружения
 
 // Настройка middleware
 app.use(cors());
 app.use(express.json());
 
+app.use(session({
+  secret: 'f3c6a1d3b2c6e1f1a8d5a9c1c6f4b7c5d8a9b6e0d8f9a0b7a9e5b4c8d6a7f2', // Замени на более надёжный секрет
+  resave: false,
+  saveUninitialized: true,
+}));
 
 // База данных
 const db = new Database('users.db');
@@ -227,13 +231,33 @@ app.post('/api/reset-voting-status', (req, res) => {
     res.json({ success: true, message: `Статусы голосования сброшены у ${updatedCount} пользователей.` });
 });
 
-app.post('/api/check-password', (req, res) => {
-    const { password } = req.body;
-    if (password === ADMIN_PASSWORD) {
-        res.json({ success: true });
-    } else {
-        res.json({ success: false });
-    }
+// Middleware для защиты панели
+function requireAdminAuth(req, res, next) {
+  if (req.session && req.session.isAdmin) {
+    next();
+  } else {
+    res.redirect('/admin-login.html');
+  }
+}
+
+// Статическая отдача файлов
+app.use(express.static(path.join(__dirname, 'VolCEC'))); // если HTML в папке public
+
+// Логин администратора (POST)
+app.post('/api/admin-login', (req, res) => {
+  const { password } = req.body;
+
+  if (password === 'SuperSecret123') { // замените на безопасный пароль
+    req.session.isAdmin = true;
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ success: false, message: 'Неверный пароль' });
+  }
+});
+
+// Отдача adminpanel.html только если залогинен
+app.get('/adminpanel.html', requireAdminAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'VolCEC', 'adminpanel.html'));
 });
 
 // -------------------- Запуск сервера --------------------
