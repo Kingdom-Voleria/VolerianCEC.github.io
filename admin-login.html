@@ -1,22 +1,33 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ЦИК Королевства Волерия</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Вход для администратора</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, button { padding: 10px; font-size: 16px; margin-top: 10px; }
+  </style>
 </head>
 <body>
-  <h2>Введите пароль администратора</h2>
-  <input type="password" id="password" placeholder="Пароль">
+  <h1>Вход администратора</h1>
+  <input type="password" id="password" placeholder="Введите пароль администратора">
   <button onclick="login()">Войти</button>
-  <p id="error" style="color:red;"></p>
 
   <script>
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (
+      !user ||
+      user.civilnumber !== '00010' ||
+      user.fullname !== 'Мярьянов Вадим Маркович' ||
+      user.status !== 'approved'
+    ) {
+      window.location.href = 'index.html';
+    }
+
     function login() {
       const password = document.getElementById('password').value;
 
-      fetch('/login-admin', {
+      fetch('/api/login-admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password })
@@ -28,9 +39,7 @@
         .then(data => {
           window.location.href = '/adminpanel.html';
         })
-        .catch(err => {
-          document.getElementById('error').textContent = 'Ошибка: ' + err.message;
-        });
+        .catch(err => alert(err.message));
     }
   </script>
 </body>

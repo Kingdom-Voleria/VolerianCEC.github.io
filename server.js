@@ -234,7 +234,7 @@ app.post('/api/reset-voting-status', (req, res) => {
 // -------------------- Админ-панель --------------------
 const ADMIN_PASSWORD = '12345'; // замените на свой пароль
 
-app.post('/login-admin', (req, res) => {
+app.post('/api/login-admin', (req, res) => {
     const { password } = req.body;
 
     if (password === ADMIN_PASSWORD) {
