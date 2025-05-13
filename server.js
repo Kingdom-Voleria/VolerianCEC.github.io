@@ -236,12 +236,15 @@ app.post('/api/reset-voting-status', (req, res) => {
     res.json({ success: true, message: `Статусы голосования сброшены у ${updatedCount} пользователей.` });
 });
 
+const issuedAdminTokens = new Set();
+
 // Проверка пароля администратора
 app.post('/api/admin-login', (req, res) => {
   const { password } = req.body;
   if (password === ADMIN_PASSWORD) {
-    adminToken = crypto.randomBytes(24).toString('hex'); // Генерируем токен
-    return res.json({ success: true, token: adminToken });
+    const token = crypto.randomBytes(24).toString('hex');
+    issuedAdminTokens.add(token);
+    return res.json({ success: true, token });
   }
   return res.status(403).json({ success: false, message: 'Неверный пароль' });
 });
@@ -255,9 +258,10 @@ app.get('/api/admin-authenticated', (req, res) => {
   return res.json({ authenticated: false });
 });
 
+
 app.get('/api/admin-content', (req, res) => {
   const token = req.headers['authorization'];
-  if (token === `Bearer ${adminToken}`) {
+  if (token && issuedAdminTokens.has(token.replace('Bearer ', ''))) {
     return res.send(`
       <h1>Панель администратора</h1>
 
