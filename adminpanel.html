@@ -22,6 +22,7 @@
 <div id="admin-content"></div>
 
 <script>
+<script>
   const user = JSON.parse(localStorage.getItem('user'));
   if (
     !user ||
@@ -37,19 +38,30 @@
 
     const res = await fetch('http://localhost:3000/api/admin-login', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password })
     });
 
-    if (res.ok) {
-      // Получаем HTML содержимое админки
-      const panel = await fetch('http://localhost:3000/api/admin-content');
+    const data = await res.json();
+
+    if (res.ok && data.token) {
+      sessionStorage.setItem('adminToken', data.token);
+
+      const panel = await fetch('http://localhost:3000/api/admin-content', {
+        headers: {
+          'Authorization': `Bearer ${data.token}`
+        }
+      });
+
       if (panel.ok) {
         const html = await panel.text();
         document.getElementById('auth-section').remove();
         document.getElementById('admin-content').innerHTML = html;
-        attachAdminLogic(); // подключаем JS-функции
+        attachAdminLogic();
+      } else {
+        alert('Ошибка загрузки панели');
       }
+
     } else {
       alert('Неверный пароль');
     }
@@ -107,6 +119,8 @@
         .catch(err => alert('Ошибка: ' + err));
     };
   }
+</script>
+
 </script>
 </body>
 </html>

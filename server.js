@@ -5,7 +5,11 @@ const path = require('path');
 const Database = require('better-sqlite3');
 const app = express();
 const port = process.env.PORT || 3000;
-const ADMIN_PASSWORD = '123456'; // Лучше использовать переменную окружения
+
+const crypto = require('crypto');
+let adminToken = null;
+const ADMIN_PASSWORD = '123456'; // лучше вынести в .env
+
 
 // Настройка middleware
 app.use(cors());
@@ -236,11 +240,12 @@ app.post('/api/reset-voting-status', (req, res) => {
 app.post('/api/admin-login', (req, res) => {
   const { password } = req.body;
   if (password === ADMIN_PASSWORD) {
-    req.session.isAdmin = true;
-    return res.json({ success: true });
+    adminToken = crypto.randomBytes(24).toString('hex'); // Генерируем токен
+    return res.json({ success: true, token: adminToken });
   }
-  return res.status(401).json({ success: false, message: 'Неверный пароль' });
+  return res.status(403).json({ success: false, message: 'Неверный пароль' });
 });
+
 
 // Проверка статуса авторизации администратора
 app.get('/api/admin-authenticated', (req, res) => {
@@ -251,7 +256,8 @@ app.get('/api/admin-authenticated', (req, res) => {
 });
 
 app.get('/api/admin-content', (req, res) => {
-  if (req.session.isAdmin) {
+  const token = req.headers['authorization'];
+  if (token === `Bearer ${adminToken}`) {
     return res.send(`
       <h1>Панель администратора</h1>
 
@@ -261,11 +267,11 @@ app.get('/api/admin-content', (req, res) => {
       <h3>Удаление пользователя по Civil Number</h3>
       <input type="text" id="civilInput" placeholder="Введите гражданский номер">
       <button onclick="deleteUserByCivilnumber()">Удалить пользователя</button>
+
     `);
   }
   return res.status(403).send('Нет доступа');
 });
-
 
 
 // -------------------- Запуск сервера --------------------
