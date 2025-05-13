@@ -5,6 +5,7 @@ const path = require('path');
 const Database = require('better-sqlite3');
 const app = express();
 const port = process.env.PORT || 3000;
+const ADMIN_PASSWORD = '123456'; // Лучше использовать переменную окружения
 
 // Настройка middleware
 app.use(cors());
@@ -230,6 +231,42 @@ app.post('/api/reset-voting-status', (req, res) => {
     console.log(`Сброшено статусов голосования у ${updatedCount} пользователей.`);
     res.json({ success: true, message: `Статусы голосования сброшены у ${updatedCount} пользователей.` });
 });
+
+// Проверка пароля администратора
+app.post('/api/admin-login', (req, res) => {
+  const { password } = req.body;
+  if (password === ADMIN_PASSWORD) {
+    req.session.isAdmin = true;
+    return res.json({ success: true });
+  }
+  return res.status(401).json({ success: false, message: 'Неверный пароль' });
+});
+
+// Проверка статуса авторизации администратора
+app.get('/api/admin-authenticated', (req, res) => {
+  if (req.session.isAdmin) {
+    return res.json({ authenticated: true });
+  }
+  return res.json({ authenticated: false });
+});
+
+app.get('/api/admin-content', (req, res) => {
+  if (req.session.isAdmin) {
+    return res.send(`
+      <h1>Панель администратора</h1>
+
+      <button onclick="resetVotingStatuses()">Сбросить статус голосования всем пользователям</button>
+      <button onclick="deleteAllUsers()">Удалить всех пользователей (включая localStorage)</button>
+
+      <h3>Удаление пользователя по Civil Number</h3>
+      <input type="text" id="civilInput" placeholder="Введите гражданский номер">
+      <button onclick="deleteUserByCivilnumber()">Удалить пользователя</button>
+    `);
+  }
+  return res.status(403).send('Нет доступа');
+});
+
+
 
 // -------------------- Запуск сервера --------------------
 app.listen(port, () => {

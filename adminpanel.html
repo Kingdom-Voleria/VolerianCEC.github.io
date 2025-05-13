@@ -2,31 +2,24 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin Panel</title>
   <style>
-    button {
+    button, input {
       display: block;
       margin: 10px 0;
       padding: 10px;
       font-size: 16px;
     }
-    input {
-      padding: 5px;
-      margin-top: 10px;
-    }
   </style>
 </head>
 <body>
-<h1>Панель администратора</h1>
+<div id="auth-section">
+  <h2>Введите пароль администратора</h2>
+  <input type="password" id="admin-password" placeholder="Пароль">
+  <button onclick="submitAdminPassword()">Войти</button>
+</div>
 
-<button onclick="resetVotingStatuses()">Сбросить статус голосования всем пользователям</button>
-
-<button onclick="deleteAllUsers()">Удалить всех пользователей (включая localStorage)</button>
-
-<h3>Удаление пользователя по Civil Number</h3>
-<input type="text" id="civilInput" placeholder="Введите гражданский номер">
-<button onclick="deleteUserByCivilnumber()">Удалить пользователя</button>
+<div id="admin-content"></div>
 
 <script>
   const user = JSON.parse(localStorage.getItem('user'));
@@ -39,68 +32,81 @@
     window.location.href = 'index.html';
   }
 
-  function resetVotingStatuses() {
-    // Обновляем votingStatus в localStorage, если нужно
-    const storedUser = JSON.parse(localStorage.getItem('user'));
-    if (storedUser && storedUser.votingStatus === 'vote') {
-      storedUser.votingStatus = 'novote';
-      localStorage.setItem('user', JSON.stringify(storedUser));
-    }
+  async function submitAdminPassword() {
+    const password = document.getElementById('admin-password').value;
 
-    // Отправляем запрос на сервер для сброса голосов
-    fetch('http://localhost:3000/api/reset-voting-status', {
-      method: 'POST'
-    })
-      .then(response => response.json())
-      .then(data => {
-        alert(data.message || 'Голоса сброшены');
-      })
-      .catch(err => {
-        alert('Ошибка при удалении голосов: ' + err);
-      });
+    const res = await fetch('http://localhost:3000/api/admin-login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ password })
+    });
+
+    if (res.ok) {
+      // Получаем HTML содержимое админки
+      const panel = await fetch('http://localhost:3000/api/admin-content');
+      if (panel.ok) {
+        const html = await panel.text();
+        document.getElementById('auth-section').remove();
+        document.getElementById('admin-content').innerHTML = html;
+        attachAdminLogic(); // подключаем JS-функции
+      }
+    } else {
+      alert('Неверный пароль');
+    }
   }
 
+  function attachAdminLogic() {
+    window.resetVotingStatuses = function() {
+      const storedUser = JSON.parse(localStorage.getItem('user'));
+      if (storedUser && storedUser.votingStatus === 'vote') {
+        storedUser.votingStatus = 'novote';
+        localStorage.setItem('user', JSON.stringify(storedUser));
+      }
 
+      fetch('http://localhost:3000/api/reset-voting-status', {
+        method: 'POST'
+      })
+        .then(response => response.json())
+        .then(data => alert(data.message || 'Голоса сброшены'))
+        .catch(err => alert('Ошибка при удалении голосов: ' + err));
+    };
 
-  function deleteAllUsers() {
-    if (confirm('Вы уверены, что хотите удалить ВСЕХ пользователей?')) {
-      fetch('http://localhost:3000/api/users', {
+    window.deleteAllUsers = function() {
+      if (confirm('Вы уверены, что хотите удалить ВСЕХ пользователей?')) {
+        fetch('http://localhost:3000/api/users', {
+          method: 'DELETE'
+        })
+          .then(response => response.json())
+          .then(data => {
+            alert(data.message);
+            localStorage.clear();
+          })
+          .catch(err => alert('Ошибка: ' + err));
+      }
+    };
+
+    window.deleteUserByCivilnumber = function() {
+      const civil = document.getElementById('civilInput').value.trim();
+      if (!civil) return alert('Введите гражданский номер');
+
+      fetch(`http://localhost:3000/api/user/${civil}`, {
         method: 'DELETE'
       })
         .then(response => response.json())
         .then(data => {
-          alert(data.message);
-          localStorage.clear();
+          if (data.success) {
+            alert(`Пользователь ${data.user.fullname} удалён`);
+            const currentUser = JSON.parse(localStorage.getItem('user'));
+            if (currentUser && currentUser.civilnumber === civil) {
+              localStorage.removeItem('user');
+            }
+          } else {
+            alert(data.message);
+          }
         })
         .catch(err => alert('Ошибка: ' + err));
-    }
+    };
   }
-
-
-  function deleteUserByCivilnumber() {
-    const civil = document.getElementById('civilInput').value.trim();
-    if (!civil) return alert('Введите гражданский номер');
-
-    fetch(`http://localhost:3000/api/user/${civil}`, {
-      method: 'DELETE'
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          alert(`Пользователь ${data.user.fullname} удалён`);
-
-          // Если в localStorage сохранён этот пользователь — удаляем только его
-          const currentUser = JSON.parse(localStorage.getItem('user'));
-          if (currentUser && currentUser.civilnumber === civil) {
-            localStorage.removeItem('user');
-          }
-        } else {
-          alert(data.message);
-        }
-      })
-      .catch(err => alert('Ошибка: ' + err));
-  }
-
 </script>
 </body>
 </html>
