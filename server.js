@@ -7,7 +7,6 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const crypto = require('crypto');
-let adminToken = null;
 const ADMIN_PASSWORD = '123456'; // лучше вынести в .env
 
 
