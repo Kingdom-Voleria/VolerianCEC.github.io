@@ -279,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function () {
             votedMessage?.style.setProperty('display', 'block');
             return;
         }
-        
+
         fetch(`http://localhost:3000/api/user-status/${user.civilnumber}`)
             .then(res => res.json())
             .then(data => {
@@ -313,8 +313,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.success) {
                 user.votingStatus = 'vote';
                 localStorage.setItem('user', JSON.stringify(user));
-                votingBlock.style.display = 'none';
-                votedMessage.style.display = 'block';
+                votingBlock?.remove(); // Полное удаление из DOM
+                votedMessage?.style.setProperty('display', 'block');
             }
         });
     }
