@@ -275,10 +275,21 @@ document.addEventListener('DOMContentLoaded', function () {
         const form = document.getElementById('voteForm');
 
         if (user.votingStatus === 'vote') {
-            votingBlock?.style.setProperty('display', 'none');
+            votingBlock?.remove(); // Удаляем элемент из DOM
             votedMessage?.style.setProperty('display', 'block');
             return;
         }
+        
+        fetch(`http://localhost:3000/api/user-status/${user.civilnumber}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.votingStatus === 'vote') {
+                    votingBlock?.remove();
+                    votedMessage?.style.setProperty('display', 'block');
+                }
+            });
+
+
 
         form?.addEventListener('submit', async (e) => {
             e.preventDefault();

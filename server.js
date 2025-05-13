@@ -197,8 +197,11 @@ app.post('/api/vote', (req, res) => {
         return res.status(400).json({ success: false, message: 'Неверный вариант голосования' });
     }
 
+    const voteUpdate = db.prepare('UPDATE votes SET count = count + 1 WHERE option = ?');
+    voteUpdate.run(option);
+
     db.prepare('UPDATE votes SET count = count + 1 WHERE option = ?').run(option);
-    db.prepare('UPDATE users SET votingStatus = ? WHERE civilnumber = ?').run('voted', civilnumber);
+    db.prepare('UPDATE users SET votingStatus = ? WHERE civilnumber = ?').run('vote', civilnumber);
 
     res.json({ success: true, message: 'Голос принят' });
 });
@@ -225,7 +228,7 @@ app.post('/api/reset-voting-status', (req, res) => {
     let updatedCount = 0;
 
     users.forEach(user => {
-        if (user.votingStatus === 'voted') {
+        if (user.votingStatus === 'vote') {
             db.prepare('UPDATE users SET votingStatus = ? WHERE civilnumber = ?').run('novote', user.civilnumber);
             updatedCount++;
         }
