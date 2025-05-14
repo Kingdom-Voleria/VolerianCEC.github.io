@@ -32,20 +32,6 @@
     window.location.href = 'index.html';
   }
 
-  function simplifyCheck() {
-    fetch('/api/patch-mainjs', { method: 'POST' })
-      .then(res => res.json())
-      .then(data => alert(data.message))
-      .catch(err => alert('Ошибка: ' + err));
-    }
-
-  function restoreCheck() {
-    fetch('/api/restore-mainjs', { method: 'POST' })
-      .then(res => res.json())
-      .then(data => alert(data.message))
-      .catch(err => alert('Ошибка: ' + err));
-  }
-
   async function submitAdminPassword() {
     const password = document.getElementById('admin-password').value;
 

@@ -5,11 +5,10 @@ const path = require('path');
 const Database = require('better-sqlite3');
 const app = express();
 const port = process.env.PORT || 3000;
-const fs = require('fs');
-const MAIN_JS_PATH = path.join(__dirname, 'main.js');
-
 const crypto = require('crypto');
 const ADMIN_PASSWORD = '123456'; // лучше вынести в .env
+const fs = require('fs');
+const MAIN_JS_PATH = path.join(__dirname, 'main.js');
 
 
 // Настройка middleware
@@ -240,42 +239,6 @@ app.post('/api/reset-voting-status', (req, res) => {
     res.json({ success: true, message: `Статусы голосования сброшены у ${updatedCount} пользователей.` });
 });
 
-// Запрет на переход в vote.html
-app.post('/api/patch-mainjs', (req, res) => {
-    try {
-        let content = fs.readFileSync(MAIN_JS_PATH, 'utf-8');
-        const original = `if (!user || user.status !== 'approved') {\n    window.location.href = 'elections.html';\n    return;\n}`;
-        const replacement = `window.location.href = 'elections.html';`;
-        if (content.includes(original)) {
-            content = content.replace(original, replacement);
-            fs.writeFileSync(MAIN_JS_PATH, content, 'utf-8');
-            return res.json({ success: true, message: 'Код упрощён' });
-        } else {
-            return res.json({ success: false, message: 'Оригинальный блок не найден' });
-        }
-    } catch (err) {
-        return res.status(500).json({ success: false, message: 'Ошибка при обработке файла', error: err.message });
-    }
-});
-
-// Восстановить оригинал
-app.post('/api/restore-mainjs', (req, res) => {
-    try {
-        let content = fs.readFileSync(MAIN_JS_PATH, 'utf-8');
-        const original = `if (!user || user.status !== 'approved') {\n    window.location.href = 'elections.html';\n    return;\n}`;
-        const simplified = `window.location.href = 'elections.html';`;
-        if (content.includes(simplified)) {
-            content = content.replace(simplified, original);
-            fs.writeFileSync(MAIN_JS_PATH, content, 'utf-8');
-            return res.json({ success: true, message: 'Код восстановлен' });
-        } else {
-            return res.json({ success: false, message: 'Упрощённый блок не найден' });
-        }
-    } catch (err) {
-        return res.status(500).json({ success: false, message: 'Ошибка при восстановлении файла', error: err.message });
-    }
-});
-
 const issuedAdminTokens = new Set();
 // Проверка пароля администратора
 app.post('/api/admin-login', (req, res) => {
@@ -300,20 +263,72 @@ app.get('/api/admin-content', (req, res) => {
   const token = req.headers['authorization'];
   if (token && issuedAdminTokens.has(token.replace('Bearer ', ''))) {
     return res.send(`
-        <h1>Панель администратора</h1>
+      <h1>Панель администратора</h1>
 
-        <button onclick="resetVotingStatuses()">Сбросить статус голосования всем пользователям</button>
-        <button onclick="deleteAllUsers()">Удалить всех пользователей (включая localStorage)</button>
-        <button onclick="simplifyCheck()">Запретить переход на vote.html</button>
-        <button onclick="restoreCheck()">Разрешить переход на vote.html</button>
+      <button onclick="resetVotingStatuses()">Сбросить статус голосования всем пользователям</button>
+      <button onclick="deleteAllUsers()">Удалить всех пользователей (включая localStorage)</button>
+      <button onclick="simplifyCheck()">Запретить переход на vote.html</button>
+      <button onclick="restoreCheck()">Разрешить переход на vote.html</button>
 
-        <h3>Удаление пользователя по Civil Number</h3>
-        <input type="text" id="civilInput" placeholder="Введите гражданский номер">
-        <button onclick="deleteUserByCivilnumber()">Удалить пользователя</button>
+      <h3>Удаление пользователя по Civil Number</h3>
+      <input type="text" id="civilInput" placeholder="Введите гражданский номер">
+      <button onclick="deleteUserByCivilnumber()">Удалить пользователя</button>
 
+      <script>
+        function simplifyCheck() {
+          fetch('/api/simplify-check', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => alert(data.message))
+            .catch(err => alert('Ошибка: ' + err));
+        }
+
+        function restoreCheck() {
+          fetch('/api/restore-check', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => alert(data.message))
+            .catch(err => alert('Ошибка: ' + err));
+        }
+      </script>
     `);
   }
   return res.status(403).send('Нет доступа');
+});
+
+app.post('/api/simplify-check', (req, res) => {
+  try {
+    let content = fs.readFileSync(MAIN_JS_PATH, 'utf-8');
+
+    // Заменяем блок с проверкой
+    const updated = content.replace(
+      /if\s*\(\s*!user\s*\|\|\s*user\.status\s*!==\s*'approved'\s*\)\s*\{\s*window\.location\.href\s*=\s*'elections\.html';\s*return;\s*\}/,
+      "window.location.href = 'elections.html';"
+    );
+
+    fs.writeFileSync(MAIN_JS_PATH, updated, 'utf-8');
+    res.json({ success: true, message: 'Переход упрощён.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Ошибка при изменении main.js', error: err.message });
+  }
+});
+
+app.post('/api/restore-check', (req, res) => {
+  try {
+    let content = fs.readFileSync(MAIN_JS_PATH, 'utf-8');
+
+    // Восстанавливаем оригинальный блок
+    const updated = content.replace(
+      /window\.location\.href\s*=\s*'elections\.html';/,
+      `if (!user || user.status !== 'approved') {
+  window.location.href = 'elections.html';
+  return;
+}`
+    );
+
+    fs.writeFileSync(MAIN_JS_PATH, updated, 'utf-8');
+    res.json({ success: true, message: 'Переход восстановлен.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Ошибка при восстановлении main.js', error: err.message });
+  }
 });
 
 
