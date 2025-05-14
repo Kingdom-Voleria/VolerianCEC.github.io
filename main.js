@@ -265,10 +265,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // === Голосование ===
     if (currentPage === 'vote.html') {
-        if (!user || user.status !== 'approved') {
-            window.location.href = 'elections.html';
-            return;
-        } 
+        window.location.href = 'elections.html'; 
 
         const votingBlock = document.querySelector('.voting-block');
         const votedMessage = document.getElementById('voted-message');
