@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!user || user.status !== 'approved') {
             window.location.href = 'elections.html';
             return;
-        }
+        } 
 
         const votingBlock = document.querySelector('.voting-block');
         const votedMessage = document.getElementById('voted-message');
