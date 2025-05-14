@@ -275,6 +275,22 @@ app.get('/api/admin-content', (req, res) => {
         <input type="text" id="civilInput" placeholder="Введите гражданский номер">
         <button onclick="deleteUserByCivilnumber()">Удалить пользователя</button>
 
+        <script>
+            function simplifyCheck() {
+                fetch('/api/patch-mainjs', { method: 'POST' })
+                    .then(res => res.json())
+                    .then(data => alert(data.message))
+                    .catch(err => alert('Ошибка: ' + err));
+                }
+
+            function restoreCheck() {
+                fetch('/api/restore-mainjs', { method: 'POST' })
+                    .then(res => res.json())
+                    .then(data => alert(data.message))
+                    .catch(err => alert('Ошибка: ' + err));
+                }
+        </script>
+
     `);
   }
   return res.status(403).send('Нет доступа');
