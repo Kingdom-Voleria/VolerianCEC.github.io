@@ -240,6 +240,42 @@ app.post('/api/reset-voting-status', (req, res) => {
     res.json({ success: true, message: `Статусы голосования сброшены у ${updatedCount} пользователей.` });
 });
 
+// Запрет на переход в vote.html
+app.post('/api/patch-mainjs', (req, res) => {
+    try {
+        let content = fs.readFileSync(MAIN_JS_PATH, 'utf-8');
+        const original = `if (!user || user.status !== 'approved') {\n    window.location.href = 'elections.html';\n    return;\n}`;
+        const replacement = `window.location.href = 'elections.html';`;
+        if (content.includes(original)) {
+            content = content.replace(original, replacement);
+            fs.writeFileSync(MAIN_JS_PATH, content, 'utf-8');
+            return res.json({ success: true, message: 'Код упрощён' });
+        } else {
+            return res.json({ success: false, message: 'Оригинальный блок не найден' });
+        }
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Ошибка при обработке файла', error: err.message });
+    }
+});
+
+// Восстановить оригинал
+app.post('/api/restore-mainjs', (req, res) => {
+    try {
+        let content = fs.readFileSync(MAIN_JS_PATH, 'utf-8');
+        const original = `if (!user || user.status !== 'approved') {\n    window.location.href = 'elections.html';\n    return;\n}`;
+        const simplified = `window.location.href = 'elections.html';`;
+        if (content.includes(simplified)) {
+            content = content.replace(simplified, original);
+            fs.writeFileSync(MAIN_JS_PATH, content, 'utf-8');
+            return res.json({ success: true, message: 'Код восстановлен' });
+        } else {
+            return res.json({ success: false, message: 'Упрощённый блок не найден' });
+        }
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Ошибка при восстановлении файла', error: err.message });
+    }
+});
+
 const issuedAdminTokens = new Set();
 // Проверка пароля администратора
 app.post('/api/admin-login', (req, res) => {
@@ -275,61 +311,9 @@ app.get('/api/admin-content', (req, res) => {
         <input type="text" id="civilInput" placeholder="Введите гражданский номер">
         <button onclick="deleteUserByCivilnumber()">Удалить пользователя</button>
 
-        <script>
-            function simplifyCheck() {
-                fetch('/api/patch-mainjs', { method: 'POST' })
-                    .then(res => res.json())
-                    .then(data => alert(data.message))
-                    .catch(err => alert('Ошибка: ' + err));
-                }
-
-            function restoreCheck() {
-                fetch('/api/restore-mainjs', { method: 'POST' })
-                    .then(res => res.json())
-                    .then(data => alert(data.message))
-                    .catch(err => alert('Ошибка: ' + err));
-                }
-        </script>
-
     `);
   }
   return res.status(403).send('Нет доступа');
-});
-
-// Запрет на переход в vote.html
-app.post('/api/patch-mainjs', (req, res) => {
-    try {
-        let content = fs.readFileSync(MAIN_JS_PATH, 'utf-8');
-        const original = `if (!user || user.status !== 'approved') {\n    window.location.href = 'elections.html';\n    return;\n}`;
-        const replacement = `window.location.href = 'elections.html';`;
-        if (content.includes(original)) {
-            content = content.replace(original, replacement);
-            fs.writeFileSync(MAIN_JS_PATH, content, 'utf-8');
-            return res.json({ success: true, message: 'Код упрощён' });
-        } else {
-            return res.json({ success: false, message: 'Оригинальный блок не найден' });
-        }
-    } catch (err) {
-        return res.status(500).json({ success: false, message: 'Ошибка при обработке файла', error: err.message });
-    }
-});
-
-// Восстановить оригинал
-app.post('/api/restore-mainjs', (req, res) => {
-    try {
-        let content = fs.readFileSync(MAIN_JS_PATH, 'utf-8');
-        const original = `if (!user || user.status !== 'approved') {\n    window.location.href = 'elections.html';\n    return;\n}`;
-        const simplified = `window.location.href = 'elections.html';`;
-        if (content.includes(simplified)) {
-            content = content.replace(simplified, original);
-            fs.writeFileSync(MAIN_JS_PATH, content, 'utf-8');
-            return res.json({ success: true, message: 'Код восстановлен' });
-        } else {
-            return res.json({ success: false, message: 'Упрощённый блок не найден' });
-        }
-    } catch (err) {
-        return res.status(500).json({ success: false, message: 'Ошибка при восстановлении файла', error: err.message });
-    }
 });
 
 
