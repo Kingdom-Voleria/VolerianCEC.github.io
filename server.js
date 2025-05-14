@@ -5,6 +5,8 @@ const path = require('path');
 const Database = require('better-sqlite3');
 const app = express();
 const port = process.env.PORT || 3000;
+const fs = require('fs');
+const MAIN_JS_PATH = path.join(__dirname, 'main.js');
 
 const crypto = require('crypto');
 const ADMIN_PASSWORD = '123456'; // лучше вынести в .env
@@ -239,7 +241,6 @@ app.post('/api/reset-voting-status', (req, res) => {
 });
 
 const issuedAdminTokens = new Set();
-
 // Проверка пароля администратора
 app.post('/api/admin-login', (req, res) => {
   const { password } = req.body;
@@ -251,7 +252,6 @@ app.post('/api/admin-login', (req, res) => {
   return res.status(403).json({ success: false, message: 'Неверный пароль' });
 });
 
-
 // Проверка статуса авторизации администратора
 app.get('/api/admin-authenticated', (req, res) => {
   if (req.session.isAdmin) {
@@ -260,23 +260,60 @@ app.get('/api/admin-authenticated', (req, res) => {
   return res.json({ authenticated: false });
 });
 
-
 app.get('/api/admin-content', (req, res) => {
   const token = req.headers['authorization'];
   if (token && issuedAdminTokens.has(token.replace('Bearer ', ''))) {
     return res.send(`
-      <h1>Панель администратора</h1>
+        <h1>Панель администратора</h1>
 
-      <button onclick="resetVotingStatuses()">Сбросить статус голосования всем пользователям</button>
-      <button onclick="deleteAllUsers()">Удалить всех пользователей (включая localStorage)</button>
+        <button onclick="resetVotingStatuses()">Сбросить статус голосования всем пользователям</button>
+        <button onclick="deleteAllUsers()">Удалить всех пользователей (включая localStorage)</button>
+        <button onclick="simplifyCheck()">Запретить переход на vote.html</button>
+        <button onclick="restoreCheck()">Разрешить переход на vote.html</button>
 
-      <h3>Удаление пользователя по Civil Number</h3>
-      <input type="text" id="civilInput" placeholder="Введите гражданский номер">
-      <button onclick="deleteUserByCivilnumber()">Удалить пользователя</button>
+        <h3>Удаление пользователя по Civil Number</h3>
+        <input type="text" id="civilInput" placeholder="Введите гражданский номер">
+        <button onclick="deleteUserByCivilnumber()">Удалить пользователя</button>
 
     `);
   }
   return res.status(403).send('Нет доступа');
+});
+
+// Запрет на переход в vote.html
+app.post('/api/patch-mainjs', (req, res) => {
+    try {
+        let content = fs.readFileSync(MAIN_JS_PATH, 'utf-8');
+        const original = `if (!user || user.status !== 'approved') {\n    window.location.href = 'elections.html';\n    return;\n}`;
+        const replacement = `window.location.href = 'elections.html';`;
+        if (content.includes(original)) {
+            content = content.replace(original, replacement);
+            fs.writeFileSync(MAIN_JS_PATH, content, 'utf-8');
+            return res.json({ success: true, message: 'Код упрощён' });
+        } else {
+            return res.json({ success: false, message: 'Оригинальный блок не найден' });
+        }
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Ошибка при обработке файла', error: err.message });
+    }
+});
+
+// Восстановить оригинал
+app.post('/api/restore-mainjs', (req, res) => {
+    try {
+        let content = fs.readFileSync(MAIN_JS_PATH, 'utf-8');
+        const original = `if (!user || user.status !== 'approved') {\n    window.location.href = 'elections.html';\n    return;\n}`;
+        const simplified = `window.location.href = 'elections.html';`;
+        if (content.includes(simplified)) {
+            content = content.replace(simplified, original);
+            fs.writeFileSync(MAIN_JS_PATH, content, 'utf-8');
+            return res.json({ success: true, message: 'Код восстановлен' });
+        } else {
+            return res.json({ success: false, message: 'Упрощённый блок не найден' });
+        }
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Ошибка при восстановлении файла', error: err.message });
+    }
 });
 
 
