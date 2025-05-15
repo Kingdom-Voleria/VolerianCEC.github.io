@@ -315,19 +315,21 @@ app.post('/api/restore-check', (req, res) => {
   }
 });
 
-// 404
+// Обработка всех несуществующих маршрутов (404)
 app.use((req, res) => {
-    res.redirect(`/error.html?code=404&message=Страница не найдена`);
+    const errorCode = 404;
+    const errorMessage = encodeURIComponent('Страница не найдена');
+    res.redirect(`/error.html?code=${errorCode}&message=${errorMessage}`);
 });
+
 
 // 500+
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    const code = err.status || 500;
-    const message = code === 500 ? 'Внутренняя ошибка сервера' : 'Произошла ошибка';
-    res.redirect(`/error.html?code=${code}&message=${encodeURIComponent(message)}`);
+    const errorCode = 500;
+    const errorMessage = encodeURIComponent('Внутренняя ошибка сервера');
+    res.redirect(`/error.html?code=${errorCode}&message=${errorMessage}`);
 });
-
 
 
 
