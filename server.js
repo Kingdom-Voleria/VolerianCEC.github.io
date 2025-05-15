@@ -9,6 +9,7 @@ const crypto = require('crypto');
 const ADMIN_PASSWORD = 'voleriarulid'; // лучше вынести в .env
 const fs = require('fs');
 const MAIN_JS_PATH = path.join(__dirname, 'main.js');
+const errorPagePath = path.join(__dirname, 'error.html');
 
 
 // Настройка middleware
@@ -315,16 +316,20 @@ app.post('/api/restore-check', (req, res) => {
   }
 });
 
-// Обработка 404 - страница не найдена
+// Обработка 404 (страница не найдена)
 app.use((req, res, next) => {
-  res.status(404).redirect('/error.html?code=404');
+  res.status(404);
+  // Редирект на error.html с параметрами
+  res.redirect(`/error.html?code=404&message=Страница не найдена`);
 });
 
-// Обработка ошибок сервера
+// Обработка других ошибок (500, 403 и т.д.)
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  let code = err.status || 500;
-  res.status(code).redirect(`/error.html?code=${code}`);
+  const status = err.status || 500;
+  const message = err.message || 'Внутренняя ошибка сервера';
+  res.status(status);
+  res.redirect(`/error.html?code=${status}&message=${encodeURIComponent(message)}`);
 });
 
 
