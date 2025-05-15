@@ -344,26 +344,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // error.html
 
-    // Получаем параметр code из URL
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code') || '404';
+    // Если это error.html — отобразить код ошибки и сообщение из URL
+    if (currentPage === 'error.html') {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code') || 'Ошибка';
+        const message = params.get('message') || 'Произошла непредвиденная ошибка';
 
-    // Сопоставление кодов с сообщениями
-    const messages = {
-      '403': 'Доступ запрещён',
-      '404': 'Страница не найдена',
-      '500': 'Внутренняя ошибка сервера',
-      '503': 'Сервис недоступен',
-    };
+        const codeElem = document.getElementById('error-code');
+        const messageElem = document.getElementById('error-message');
 
-    const errorCodeElem = document.getElementById('error-code');
-    const errorMessageElem = document.getElementById('error-message');
+        if (codeElem) codeElem.textContent = code;
+        if (messageElem) messageElem.textContent = decodeURIComponent(message);
+    }
 
-    // Отобразить код ошибки
-    errorCodeElem.textContent = code;
-
-    // Отобразить сообщение (если не найдено - общее)
-    errorMessageElem.textContent = messages[code] || 'Ошибка';
 
     // Анимация появления на странице ошибки
     const errorContent = document.querySelector(".error-content");

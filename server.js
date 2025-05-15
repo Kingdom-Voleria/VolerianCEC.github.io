@@ -15,6 +15,8 @@ const errorPagePath = path.join(__dirname, 'error.html');
 // Настройка middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname)));
+
 
 app.use(session({
   secret: 'f3c6a1d3b2c6e1f1a8d5a9c1c6f4b7c5d8a9b6e0d8f9a0b7a9e5b4c8d6a7f2', // Замени на более надёжный секрет
@@ -199,9 +201,6 @@ app.post('/api/vote', (req, res) => {
         return res.status(400).json({ success: false, message: 'Неверный вариант голосования' });
     }
 
-    const voteUpdate = db.prepare('UPDATE votes SET count = count + 1 WHERE option = ?');
-    voteUpdate.run(option);
-
     db.prepare('UPDATE votes SET count = count + 1 WHERE option = ?').run(option);
     db.prepare('UPDATE users SET votingStatus = ? WHERE civilnumber = ?').run('vote', civilnumber);
 
@@ -316,21 +315,20 @@ app.post('/api/restore-check', (req, res) => {
   }
 });
 
-// Обработка 404 (страница не найдена)
-app.use((req, res, next) => {
-  res.status(404);
-  // Редирект на error.html с параметрами
-  res.redirect(`/error.html?code=404&message=Страница не найдена`);
+// 404
+app.use((req, res) => {
+    res.redirect(`/error.html?code=404&message=Страница не найдена`);
 });
 
-// Обработка других ошибок (500, 403 и т.д.)
+// 500+
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  const status = err.status || 500;
-  const message = err.message || 'Внутренняя ошибка сервера';
-  res.status(status);
-  res.redirect(`/error.html?code=${status}&message=${encodeURIComponent(message)}`);
+    console.error(err.stack);
+    const code = err.status || 500;
+    const message = code === 500 ? 'Внутренняя ошибка сервера' : 'Произошла ошибка';
+    res.redirect(`/error.html?code=${code}&message=${encodeURIComponent(message)}`);
 });
+
+
 
 
 // -------------------- Запуск сервера --------------------
