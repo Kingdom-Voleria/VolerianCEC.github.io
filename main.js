@@ -1,8 +1,6 @@
-
 document.addEventListener('DOMContentLoaded', function () {
     const currentPage = window.location.pathname.split('/').pop();
     const user = JSON.parse(localStorage.getItem('user'));
-
 
     // Анимация появления секций на главной странице
     const sections = document.querySelectorAll('.content-section');
@@ -265,7 +263,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // === Голосование ===
     if (currentPage === 'vote.html') {
-        window.location.href = 'elections.html'; 
+        if (!user || user.status !== 'approved') {
+            window.location.href = 'elections.html';
+            return;
+        } 
 
         const votingBlock = document.querySelector('.voting-block');
         const votedMessage = document.getElementById('voted-message');
@@ -340,4 +341,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const statusBox = document.querySelector(`.status-${user?.status || 'not-found'}`);
     if (statusBox) statusBox.style.display = 'flex';
+
+    // error.html
+
+    // Получаем параметр code из URL
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code') || '404';
+
+    // Сопоставление кодов с сообщениями
+    const messages = {
+      '403': 'Доступ запрещён',
+      '404': 'Страница не найдена',
+      '500': 'Внутренняя ошибка сервера',
+      '503': 'Сервис недоступен',
+    };
+
+    const errorCodeElem = document.getElementById('error-code');
+    const errorMessageElem = document.getElementById('error-message');
+
+    // Отобразить код ошибки
+    errorCodeElem.textContent = code;
+
+    // Отобразить сообщение (если не найдено - общее)
+    errorMessageElem.textContent = messages[code] || 'Ошибка';
+
+    // Анимация появления на странице ошибки
+    const errorContent = document.querySelector(".error-content");
+    if (errorContent) {
+        requestAnimationFrame(() => {
+            errorContent.classList.add("visible");
+        });
+    }
 });

@@ -6,7 +6,7 @@ const Database = require('better-sqlite3');
 const app = express();
 const port = process.env.PORT || 3000;
 const crypto = require('crypto');
-const ADMIN_PASSWORD = '123456'; // лучше вынести в .env
+const ADMIN_PASSWORD = 'voleriarulid'; // лучше вынести в .env
 const fs = require('fs');
 const MAIN_JS_PATH = path.join(__dirname, 'main.js');
 
@@ -313,6 +313,18 @@ app.post('/api/restore-check', (req, res) => {
   } catch (err) {
     res.status(500).json({ success: false, message: 'Ошибка при восстановлении main.js', error: err.message });
   }
+});
+
+// Обработка 404 - страница не найдена
+app.use((req, res, next) => {
+  res.status(404).redirect('/error.html?code=404');
+});
+
+// Обработка ошибок сервера
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  let code = err.status || 500;
+  res.status(code).redirect(`/error.html?code=${code}`);
 });
 
 

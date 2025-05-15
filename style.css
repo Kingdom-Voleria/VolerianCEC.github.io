@@ -549,6 +549,17 @@ label.upload-label:hover {
     background-color: #0056b3;
 }
 
+.error-content {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.error-content.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 /* ====== Media Queries ====== */
 
 /* Min-width: 769px */
