@@ -1,8 +1,19 @@
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     const currentPage = window.location.pathname.split('/').pop();
-    const user = JSON.parse(localStorage.getItem('user'));
 
-    // Анимация появления секций на главной странице
+    // Функция получения текущего пользователя по cookie
+    async function getCurrentUser() {
+        const res = await fetch('http://localhost:3000/api/me', { credentials: 'include' });
+        if (res.ok) {
+            const data = await res.json();
+            return data.user || null;
+        }
+        return null;
+    }
+
+    let user = await getCurrentUser();
+
+    // --- Анимация появления секций на главной странице ---
     const sections = document.querySelectorAll('.content-section');
     function checkVisibility() {
         sections.forEach(section => {
@@ -14,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
     checkVisibility();
     window.addEventListener('scroll', checkVisibility);
 
-    // Плавный скролл к разделам регистрации и голосования
+    // --- Плавный скролл к разделам регистрации и голосования ---
     document.querySelectorAll('.action-button').forEach(button => {
         button.addEventListener('click', function (e) {
             const targetId = this.getAttribute('href');
@@ -29,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Анимация блоков на странице выборов
+    // --- Анимация блоков на странице выборов ---
     const electionBlocks = document.querySelectorAll('.selection-block, .title-active, .title-inactive');
     electionBlocks.forEach(block => {
         block.style.opacity = '0';
@@ -49,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
     checkElectionVisibility();
     window.addEventListener('scroll', checkElectionVisibility);
 
-    // Показ блока профиля вместо формы регистрации
+    // --- Показ блока профиля вместо формы регистрации ---
     function setupProfileAvatar() {
         if (!user || user.status !== 'approved') return;
         const navLinks = document.querySelector('.header-links');
@@ -100,12 +111,18 @@ document.addEventListener('DOMContentLoaded', function () {
         const profileCard = document.getElementById('profile-card');
         if (!profileCard) return;
 
-        fetch(`http://localhost:3000/api/user-status/${user.civilnumber}`)
+        // Обновляем статус с сервера и обновляем интерфейс
+        fetch(`http://localhost:3000/api/user-status/${user.civilnumber}`, { credentials: 'include' })
             .then(res => res.json())
-            .then(data => {
+            .then(async data => {
                 if (data.success) {
                     user.status = data.status;
-                    localStorage.setItem('user', JSON.stringify(user));
+                    user.votingStatus = data.votingStatus;
+                    // если статус изменился, обновим local user и перерисуем страницу
+                    if (user.status !== 'approved') {
+                        user = await getCurrentUser();
+                        window.location.reload();
+                    }
                 }
             });
 
@@ -141,8 +158,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (user.status === 'rejected') {
                 document.getElementById('resubmit-button').addEventListener('click', async () => {
-                    await fetch(`http://localhost:3000/api/user/${user.civilnumber}`, { method: 'DELETE' });
-                    localStorage.removeItem('user');
+                    await fetch(`http://localhost:3000/api/user/${user.civilnumber}`, { method: 'DELETE', credentials: 'include' });
+                    document.cookie = 'session=; Max-Age=0; path=/;';
                     window.location.href = 'registration.html';
                 });
             }
@@ -166,16 +183,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 avatarInput?.addEventListener('change', function () {
                     const file = avatarInput.files[0];
                     const reader = new FileReader();
-                    reader.onloadend = function () {
-                        user.avatar = reader.result;
-                        localStorage.setItem('user', JSON.stringify(user));
-                        avatarPreview.src = reader.result;
-
-                        fetch('http://localhost:3000/api/update-avatar', {
+                    reader.onloadend = async function () {
+                        const avatar = reader.result;
+                        const res = await fetch('http://localhost:3000/api/update-avatar', {
                             method: 'POST',
+                            credentials: 'include',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ civilnumber: user.civilnumber, avatar: reader.result })
+                            body: JSON.stringify({ avatar })
                         });
+                        if (res.ok) {
+                            avatarPreview.src = avatar;
+                            user.avatar = avatar;
+                        }
                     };
                     reader.readAsDataURL(file);
                 });
@@ -192,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const registerForm = document.querySelector('.register-form');
         if (registerForm) {
-            registerForm.addEventListener('submit', function (e) {
+            registerForm.addEventListener('submit', async function (e) {
                 e.preventDefault();
                 const fullname = document.getElementById('fullname').value.trim();
                 const civilnumber = document.getElementById('civilnumber').value.trim();
@@ -200,37 +219,26 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!/^[A-Za-zА-Яа-я]{3,}(?:\s+[A-Za-zА-Яа-я]{3,})+$/.test(fullname)) {
                     return showError('ФИО должно содержать минимум два слова, каждое минимум из 3 букв.');
                 }
-
                 if (!/^\d{5}$/.test(civilnumber)) {
                     return showError('Гражданский номер должен состоять из 5 цифр.');
                 }
 
-                fetch('http://localhost:3000/api/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fullname, civilnumber }),
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            localStorage.setItem('user', JSON.stringify(data.user));
-
-                            // Получаем массив всех пользователей из localStorage (если нет — создаём новый)
-                            const allUsers = JSON.parse(localStorage.getItem('allUsers')) || [];
-
-                            // Добавляем нового пользователя, если такого civilnumber ещё нет
-                            const exists = allUsers.some(u => u.civilnumber === data.user.civilnumber);
-                            if (!exists) {
-                                allUsers.push(data.user);
-                                localStorage.setItem('allUsers', JSON.stringify(allUsers));
-                            }
-
-                            window.location.href = 'profile.html';
-                        } else {
-                            showError(data.message || 'Ошибка регистрации');
-                        }
-                    })
-                    .catch(() => showError('Не удалось подключиться к серверу.'));
+                try {
+                    const res = await fetch('http://localhost:3000/api/register', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ fullname, civilnumber })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        window.location.href = 'profile.html';
+                    } else {
+                        showError(data.message || 'Ошибка регистрации');
+                    }
+                } catch {
+                    showError('Не удалось подключиться к серверу.');
+                }
             });
         }
 
@@ -266,19 +274,19 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!user || user.status !== 'approved') {
             window.location.href = 'elections.html';
             return;
-        } 
+        }
 
         const votingBlock = document.querySelector('.voting-block');
         const votedMessage = document.getElementById('voted-message');
         const form = document.getElementById('voteForm');
 
         if (user.votingStatus === 'vote') {
-            votingBlock?.remove(); // Удаляем элемент из DOM
+            votingBlock?.remove();
             votedMessage?.style.setProperty('display', 'block');
             return;
         }
 
-        fetch(`http://localhost:3000/api/user-status/${user.civilnumber}`)
+        fetch(`http://localhost:3000/api/user-status/${user.civilnumber}`, { credentials: 'include' })
             .then(res => res.json())
             .then(data => {
                 if (data.votingStatus === 'vote') {
@@ -286,8 +294,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     votedMessage?.style.setProperty('display', 'block');
                 }
             });
-
-
 
         form?.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -303,15 +309,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const res = await fetch('http://localhost:3000/api/vote', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ civilnumber: user.civilnumber, option: selected.value })
+                body: JSON.stringify({ option: selected.value })
             });
             const data = await res.json();
 
             if (data.success) {
-                user.votingStatus = 'vote';
-                localStorage.setItem('user', JSON.stringify(user));
-                votingBlock?.remove(); // Полное удаление из DOM
+                votingBlock?.remove();
                 votedMessage?.style.setProperty('display', 'block');
             }
         });
@@ -321,7 +326,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.vote-option').forEach(option => {
         const radio = option.querySelector('input[type="radio"]');
         if (radio?.checked) option.classList.add('selected');
-
         option.addEventListener('click', function () {
             document.querySelectorAll('.vote-option').forEach(opt => opt.classList.remove('selected'));
             this.classList.add('selected');
@@ -342,9 +346,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const statusBox = document.querySelector(`.status-${user?.status || 'not-found'}`);
     if (statusBox) statusBox.style.display = 'flex';
 
-    // error.html
-
-    // Если это error.html — отобразить код ошибки и сообщение из URL
+    // === error.html ===
     if (currentPage === 'error.html') {
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code') || 'Ошибка';
@@ -356,7 +358,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (codeElem) codeElem.textContent = code;
         if (messageElem) messageElem.textContent = decodeURIComponent(message);
     }
-
 
     // Анимация появления на странице ошибки
     const errorContent = document.querySelector(".error-content");
