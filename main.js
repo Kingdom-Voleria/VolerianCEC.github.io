@@ -1,7 +1,14 @@
-document.addEventListener('DOMContentLoaded', async function () {
+document.addEventListener('DOMContentLoaded', async () => {
     const currentPage = window.location.pathname.split('/').pop();
 
-    // Функция получения текущего пользователя по cookie
+    async function getCSRFToken() {
+        if (window._csrfToken) return window._csrfToken;
+        const res = await fetch('/api/csrf-token', { credentials: 'include' });
+        const data = await res.json();
+        window._csrfToken = data.csrfToken;
+        return data.csrfToken;
+    }
+
     async function getCurrentUser() {
         const res = await fetch('http://localhost:3000/api/me', { credentials: 'include' });
         if (res.ok) {
@@ -13,19 +20,20 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     let user = await getCurrentUser();
 
-    // --- Анимация появления секций на главной странице ---
+    // Secton animation
     const sections = document.querySelectorAll('.content-section');
     function checkVisibility() {
         sections.forEach(section => {
             const rect = section.getBoundingClientRect();
-            const isVisible = rect.top <= window.innerHeight * 0.8 && rect.bottom >= window.innerHeight * 0.2;
-            if (isVisible) section.classList.add('visible');
+            if (rect.top <= window.innerHeight * 0.8 && rect.bottom >= window.innerHeight * 0.2) {
+                section.classList.add('visible');
+            }
         });
     }
     checkVisibility();
     window.addEventListener('scroll', checkVisibility);
 
-    // --- Плавный скролл к разделам регистрации и голосования ---
+    // Smooth scroll for buttons
     document.querySelectorAll('.action-button').forEach(button => {
         button.addEventListener('click', function (e) {
             const targetId = this.getAttribute('href');
@@ -40,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
     });
 
-    // --- Анимация блоков на странице выборов ---
+    // Election block animation
     const electionBlocks = document.querySelectorAll('.selection-block, .title-active, .title-inactive');
     electionBlocks.forEach(block => {
         block.style.opacity = '0';
@@ -50,8 +58,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     function checkElectionVisibility() {
         electionBlocks.forEach(block => {
             const rect = block.getBoundingClientRect();
-            const isVisible = rect.top <= window.innerHeight * 0.8 && rect.bottom >= window.innerHeight * 0.2;
-            if (isVisible) {
+            if (rect.top <= window.innerHeight * 0.8 && rect.bottom >= window.innerHeight * 0.2) {
                 block.style.opacity = '1';
                 block.style.transform = 'translateY(0)';
             }
@@ -60,42 +67,46 @@ document.addEventListener('DOMContentLoaded', async function () {
     checkElectionVisibility();
     window.addEventListener('scroll', checkElectionVisibility);
 
-    // --- Показ блока профиля вместо формы регистрации ---
-    function setupProfileAvatar() {
+    // Replace "Registration" link with avatar/profile if logged in
+    async function setupProfileAvatar() {
         if (!user || user.status !== 'approved') return;
         const navLinks = document.querySelector('.header-links');
         if (!navLinks) return;
-
         const profileLink = [...navLinks.children].find(link => link.textContent.trim() === 'Регистрация');
         if (!profileLink) return;
-
+        const freshUserRes = await fetch(`http://localhost:3000/api/user-info/${user.civilnumber}`, { credentials: 'include' });
+        const freshUserData = await freshUserRes.json();
+        const freshUser = freshUserData.success && freshUserData.user ? freshUserData.user : user;
         const avatarWrapper = document.createElement('div');
         avatarWrapper.className = 'avatar-wrapper';
         avatarWrapper.style.cursor = 'pointer';
-
         const avatarImg = document.createElement('img');
-        avatarImg.src = user.avatar || 'image/profile-empty.png';
+        avatarImg.src = freshUser.avatar || 'image/profile-empty.png';
         avatarImg.alt = 'Аватар';
         avatarImg.className = 'header-avatar';
-
-        const nameParts = user.fullname.trim().split(/\s+/);
+        const nameParts = freshUser.fullname.trim().split(/\s+/);
         const userNameSpan = document.createElement('span');
         userNameSpan.textContent = nameParts[1] || nameParts[0];
         userNameSpan.className = 'avatar-name';
-
         avatarWrapper.append(avatarImg, userNameSpan);
         avatarWrapper.addEventListener('click', () => window.location.href = 'profile.html');
-
         profileLink.replaceWith(avatarWrapper);
     }
     setupProfileAvatar();
 
-    // === Профиль ===
+    // === Profile page ===
     if (currentPage === 'profile.html') {
         if (!user) {
             window.location.href = 'registration.html';
             return;
         }
+        const res = await fetch(`http://localhost:3000/api/user-info/${user.civilnumber}`, { credentials: 'include' });
+        const data = await res.json();
+        if (!data.success || !data.user) {
+            window.location.href = 'registration.html';
+            return;
+        }
+        user = data.user;
 
         const header = document.querySelector('header');
         if (header) {
@@ -109,26 +120,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         const profileCard = document.getElementById('profile-card');
-        if (!profileCard) return;
-
-        // Обновляем статус с сервера и обновляем интерфейс
-        fetch(`http://localhost:3000/api/user-status/${user.civilnumber}`, { credentials: 'include' })
-            .then(res => res.json())
-            .then(async data => {
-                if (data.success) {
-                    user.status = data.status;
-                    user.votingStatus = data.votingStatus;
-                    // если статус изменился, обновим local user и перерисуем страницу
-                    if (user.status !== 'approved') {
-                        user = await getCurrentUser();
-                        window.location.reload();
-                    }
-                }
-            });
+        if (profileCard) profileCard.style.display = 'none';
 
         if (user.status === 'pending' || user.status === 'rejected') {
-            profileCard.style.display = 'none';
-
             const messages = {
                 pending: `
                     <p>Ваш профиль находится на проверке. Пожалуйста, обратитесь в сообщество граждан Волерии в социальной сети ВКонтакте, чтобы подтвердить заявку.</p>
@@ -150,15 +144,19 @@ document.addEventListener('DOMContentLoaded', async function () {
                     </div>
                 `
             };
-
             const container = document.createElement('div');
             container.className = 'message';
-            container.innerHTML = messages[user.status];
+            container.innerHTML = messages[user.status] || "<p>Ваш профиль ожидает модерации.</p>";
             document.body.appendChild(container);
 
             if (user.status === 'rejected') {
                 document.getElementById('resubmit-button').addEventListener('click', async () => {
-                    await fetch(`http://localhost:3000/api/user/${user.civilnumber}`, { method: 'DELETE', credentials: 'include' });
+                    const csrfToken = await getCSRFToken();
+                    await fetch(`http://localhost:3000/api/user/${user.civilnumber}`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                        headers: { 'X-CSRF-Token': csrfToken }
+                    });
                     document.cookie = 'session=; Max-Age=0; path=/;';
                     window.location.href = 'registration.html';
                 });
@@ -167,33 +165,46 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         if (user.status === 'approved') {
-            profileCard.style.display = 'block';
-            requestAnimationFrame(() => profileCard.classList.add('visible'));
+            if (profileCard) {
+                profileCard.style.display = 'block';
+                requestAnimationFrame(() => profileCard.classList.add('visible'));
+            }
 
             const fullnameElement = document.getElementById('userFullname');
             const civilnumberElement = document.getElementById('userCivilnumber');
             const avatarPreview = document.getElementById('avatarPreview');
             const avatarInput = document.getElementById('avatarInput');
 
-            if (fullnameElement && civilnumberElement && avatarPreview) {
+            if (fullnameElement && civilnumberElement && avatarPreview && avatarInput) {
                 fullnameElement.textContent = user.fullname;
                 civilnumberElement.textContent = user.civilnumber;
                 avatarPreview.src = user.avatar || 'image/profile-empty.png';
+                avatarInput.value = '';
 
-                avatarInput?.addEventListener('change', function () {
+                avatarInput.addEventListener('change', async function () {
                     const file = avatarInput.files[0];
+                    if (!file) return;
                     const reader = new FileReader();
                     reader.onloadend = async function () {
                         const avatar = reader.result;
+                        const csrfToken = await getCSRFToken();
                         const res = await fetch('http://localhost:3000/api/update-avatar', {
                             method: 'POST',
                             credentials: 'include',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
                             body: JSON.stringify({ avatar })
                         });
                         if (res.ok) {
-                            avatarPreview.src = avatar;
-                            user.avatar = avatar;
+                            const updatedUserRes = await fetch(`http://localhost:3000/api/user-info/${user.civilnumber}`, { credentials: 'include' });
+                            const updatedData = await updatedUserRes.json();
+                            if (updatedData.success && updatedData.user) {
+                                user = updatedData.user;
+                                avatarPreview.src = user.avatar || 'image/profile-empty.png';
+                                const headerAvatar = document.querySelector('.header-avatar');
+                                if (headerAvatar) headerAvatar.src = user.avatar || 'image/profile-empty.png';
+                            } else {
+                                avatarPreview.src = avatar;
+                            }
                         }
                     };
                     reader.readAsDataURL(file);
@@ -202,7 +213,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    // === Регистрация ===
+    // === Registration page ===
     if (currentPage === 'registration.html') {
         if (user) {
             window.location.href = 'profile.html';
@@ -210,11 +221,26 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         const registerForm = document.querySelector('.register-form');
+        const passwordInput = document.getElementById('password');
+        const togglePasswordBtn = document.getElementById('togglePassword');
+        if (togglePasswordBtn && passwordInput) {
+            togglePasswordBtn.addEventListener('click', function () {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    togglePasswordBtn.textContent = '🙈';
+                } else {
+                    passwordInput.type = 'password';
+                    togglePasswordBtn.textContent = '👁';
+                }
+            });
+        }
+
         if (registerForm) {
             registerForm.addEventListener('submit', async function (e) {
                 e.preventDefault();
                 const fullname = document.getElementById('fullname').value.trim();
                 const civilnumber = document.getElementById('civilnumber').value.trim();
+                const password = passwordInput.value;
 
                 if (!/^[A-Za-zА-Яа-я]{3,}(?:\s+[A-Za-zА-Яа-я]{3,})+$/.test(fullname)) {
                     return showError('ФИО должно содержать минимум два слова, каждое минимум из 3 букв.');
@@ -222,13 +248,16 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (!/^\d{5}$/.test(civilnumber)) {
                     return showError('Гражданский номер должен состоять из 5 цифр.');
                 }
+                if (!/^(?=.*[A-Za-zА-Яа-я])(?=.*\d).{8,}$/.test(password)) {
+                    return showError('Пароль должен быть не менее 8 символов и содержать буквы и цифры.');
+                }
 
                 try {
                     const res = await fetch('http://localhost:3000/api/register', {
                         method: 'POST',
                         credentials: 'include',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ fullname, civilnumber })
+                        body: JSON.stringify({ fullname, civilnumber, password })
                     });
                     const data = await res.json();
                     if (data.success) {
@@ -261,7 +290,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    // Анимация формы регистрации
+    // Registration form animation
     const form = document.querySelector(".registration-form");
     if (form) {
         requestAnimationFrame(() => {
@@ -269,7 +298,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
     }
 
-    // === Голосование ===
+    // === Voting page ===
     if (currentPage === 'vote.html') {
         if (!user || user.status !== 'approved') {
             window.location.href = 'elections.html';
@@ -307,10 +336,14 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return;
             }
 
+            const csrfToken = await getCSRFToken();
             const res = await fetch('http://localhost:3000/api/vote', {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
                 body: JSON.stringify({ option: selected.value })
             });
             const data = await res.json();
@@ -322,7 +355,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
     }
 
-    // Выделение выбранного варианта
+    // Voting option selection
     document.querySelectorAll('.vote-option').forEach(option => {
         const radio = option.querySelector('input[type="radio"]');
         if (radio?.checked) option.classList.add('selected');
@@ -333,7 +366,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
     });
 
-    // Ограничение перехода по неактивным ссылкам
+    // Prevent going to vote if not approved
     const voteLink = document.getElementById('vote-link');
     voteLink?.addEventListener('click', (e) => {
         if (!user || user.status !== 'approved') e.preventDefault();
@@ -346,7 +379,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const statusBox = document.querySelector(`.status-${user?.status || 'not-found'}`);
     if (statusBox) statusBox.style.display = 'flex';
 
-    // === error.html ===
+    // === Error page ===
     if (currentPage === 'error.html') {
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code') || 'Ошибка';
@@ -359,7 +392,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (messageElem) messageElem.textContent = decodeURIComponent(message);
     }
 
-    // Анимация появления на странице ошибки
+    // Error animation
     const errorContent = document.querySelector(".error-content");
     if (errorContent) {
         requestAnimationFrame(() => {

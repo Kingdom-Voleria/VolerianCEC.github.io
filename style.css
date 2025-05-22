@@ -1,4 +1,3 @@
-/* ====== Base Styles ====== */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -17,7 +16,7 @@ body {
     font-family: 'Arial', 'Verdana', sans-serif;
     line-height: 1.6;
     color: #333;
-    background-color: #fff;
+    background: #fff;
     scroll-behavior: smooth;
 }
 
@@ -31,13 +30,12 @@ input[type="file"] {
     display: none;
 }
 
-/* ====== Header ====== */
 .header {
     display: flex;
     flex-direction: column;
     padding: 10px 0;
-    background-color: #f8f8f8;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    background: #f8f8f8;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     width: 100%;
 }
 
@@ -65,7 +63,6 @@ input[type="file"] {
     font-size: 18px;
     font-weight: bold;
     color: #333;
-    margin: 0;
 }
 
 .header-links {
@@ -77,7 +74,7 @@ input[type="file"] {
     border-top: 1px solid #eee;
     padding: 10px 5%;
     align-items: center;
-    background-color: #f8f8f8;
+    background: #f8f8f8;
 }
 
 .header-links a {
@@ -86,30 +83,28 @@ input[type="file"] {
     height: 36px;
     line-height: 36px;
     text-decoration: none;
-    position: relative;
     color: #333;
     font-weight: 500;
     white-space: nowrap;
     padding: 5px 10px;
     border-radius: 4px;
-    transition: all 0.3s ease;
+    transition: all 0.3s;
 }
 
 .header-links a:hover {
     color: #0066cc;
-    background-color: #f0f0f0;
+    background: #f0f0f0;
 }
 
-/* ====== Avatar Block ====== */
 .avatar-wrapper {
     display: flex;
     align-items: center;
     height: 36px;
     padding: 5px 10px;
     border-radius: 4px;
-    transition: all 0.3s ease;
+    transition: all 0.3s;
+    background: transparent;
     text-decoration: none;
-    background-color: transparent;
 }
 
 .header-avatar {
@@ -117,8 +112,8 @@ input[type="file"] {
     height: 36px;
     border-radius: 50%;
     object-fit: cover;
-    transition: transform 0.3s ease;
-    border: 2px solid white;
+    transition: transform 0.3s;
+    border: 2px solid #fff;
 }
 
 .avatar-name {
@@ -126,22 +121,20 @@ input[type="file"] {
     white-space: nowrap;
     opacity: 0;
     transform: translateX(-10px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    transition: opacity 0.4s, transform 0.4s;
     font-size: 16px;
     font-weight: 500;
     color: #333;
 }
 
 .avatar-wrapper:hover {
-    background-color: #f0f0f0;
+    background: #f0f0f0;
 }
-
 .avatar-wrapper:hover .avatar-name {
     opacity: 1;
     transform: translateX(0);
 }
 
-/* ====== Main Content ====== */
 .main-content {
     padding: 40px 5%;
 }
@@ -152,9 +145,8 @@ input[type="file"] {
     margin-bottom: 60px;
     opacity: 0;
     transform: translateY(20px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    transition: opacity 0.6s, transform 0.6s;
 }
-
 .content-section.visible {
     opacity: 1;
     transform: translateY(0);
@@ -167,13 +159,11 @@ input[type="file"] {
     justify-content: center;
     align-items: center;
 }
-
 .section-image img {
     max-width: 80%;
     height: auto;
     object-fit: contain;
 }
-
 .register-section .section-image img {
     max-width: 50%;
     max-height: 400px;
@@ -183,54 +173,47 @@ input[type="file"] {
     flex: 1;
     padding: 20px;
 }
-
 .section-text h2 {
     font-size: 28px;
     margin-bottom: 1px;
     color: #0066cc;
     padding-bottom: 10px;
 }
-
 .section-text p {
     font-size: 18px;
     line-height: 1.6;
     color: #555;
 }
 
-/* ====== Buttons ====== */
 .action-buttons {
     display: flex;
     gap: 15px;
     margin-top: 20px;
 }
-
 .action-button {
     padding: 12px 20px;
-    background-color: #0066cc;
-    color: white;
+    background: #0066cc;
+    color: #fff;
     border: none;
     border-radius: 4px;
     text-decoration: none;
     font-size: 16px;
-    transition: all 0.3s ease;
+    transition: all 0.3s;
     cursor: pointer;
     text-align: center;
     min-width: 150px;
     white-space: nowrap;
 }
-
 .action-buttons-wrapper {
     display: flex;
     justify-content: center;
 }
-
 .action-button:hover {
-    background-color: #0054a9;
+    background: #0054a9;
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-/* ====== Titles ====== */
 .title-active, .title-inactive {
     text-align: center;
     margin: 30px 0;
@@ -241,13 +224,11 @@ input[type="file"] {
     justify-content: center;
     gap: 10px;
 }
-
 .selection-icon {
     width: 30px;
     height: 30px;
     object-fit: contain;
 }
-
 .date-icon {
     width: 25px;
     height: 25px;
@@ -255,106 +236,82 @@ input[type="file"] {
     vertical-align: middle;
 }
 
-/* ====== Selection Block ====== */
 .selection-block {
     width: 90%;
     max-width: 500px;
     padding: 20px;
     margin: 15px auto;
-    background-color: #f8f9fa;
+    background: #f8f9fa;
     border: 1px solid #dee2e6;
     border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    font-family: Arial, sans-serif;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     color: #212529;
     line-height: 1.5;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
-
 .selection-block:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
-
 .selection-block p {
     margin-bottom: 0;
 }
-
 .title-block {
     font-size: 20px;
     font-weight: bold;
     margin-bottom: 10px;
 }
-
 .selection-description {
     color: #666;
     font-size: 16px;
     margin-bottom: 8px;
 }
-
 .selection-date, .selection-status {
     margin-top: 10px;
     font-size: 14px;
     display: flex;
     align-items: center;
 }
-
 .date-text {
     margin-left: 5px;
 }
-
 .status-icon {
     width: 25px;
     height: 25px;
     margin-right: 8px;
 }
+.status-approved { color: #28a745; }
+.status-rejected { color: #dc3545; }
+.status-pending { color: #ffc107; }
 
-.status-approved {
-    color: #28a745;
-}
-
-.status-rejected {
-    color: #dc3545;
-}
-
-.status-pending {
-    color: #ffc107;
-}
-
-/* ====== Voting Block ====== */
 .voting-block {
     max-width: 500px;
     margin: 20px auto;
     padding: 20px;
     border: 1px solid #ddd;
     border-radius: 8px;
-    background-color: #f9f9f9;
+    background: #f9f9f9;
 }
-
 .voting-block h3 {
     margin-top: 0;
     color: #333;
 }
-
 .vote-option {
     margin: 10px 0;
     padding: 12px;
-    background-color: #fff;
+    background: #fff;
     border-radius: 4px;
     border: 1px solid #ddd;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s;
 }
-
 .vote-option:hover {
     border-color: #0066cc;
 }
-
 .vote-option.selected {
-    background-color: #e6f2ff;
+    background: #e6f2ff;
     border-color: #0066cc;
 }
-
 .vote-option label {
     display: flex;
     align-items: center;
@@ -362,41 +319,35 @@ input[type="file"] {
     width: 100%;
     height: 100%;
 }
-
 .vote-option input[type="radio"] {
     margin-right: 10px;
 }
-
 .voting-block button {
     margin-top: 15px;
     padding: 10px 15px;
-    background-color: #0066cc;
-    color: white;
+    background: #0066cc;
+    color: #fff;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background 0.3s;
 }
-
 .voting-block button:hover {
-    background-color: #0054a9;
+    background: #0054a9;
 }
 
-/* ====== Registration Form ====== */
 .registration-form {
     max-width: 500px;
     margin: 0 auto;
     padding: 20px;
     opacity: 0;
     transform: translateY(20px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    transition: opacity 0.6s, transform 0.6s;
 }
-
 .registration-form.visible {
     opacity: 1;
     transform: translateY(0);
 }
-
 .registration-form h2 {
     text-align: center;
     margin-bottom: 20px;
@@ -407,52 +358,47 @@ input[type="file"] {
     display: flex;
     flex-direction: column;
 }
-
 .form-group {
     margin-bottom: 15px;
 }
-
 .form-label {
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
 }
-
 .form-input {
     width: 100%;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 4px;
 }
-
 .form-hint {
     color: #666;
     font-size: 0.8em;
     margin-top: 3px;
 }
-
 .submit-button {
     width: 100%;
 }
 
-.profile-card {
-    background: white;
+.profile-card, .message {
+    background: #fff;
     border-radius: 16px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.1);
     padding: 24px;
     text-align: center;
     max-width: 480px;
     margin: 130px auto;
+}
+.profile-card {
     opacity: 0;
     transform: translateY(20px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    transition: opacity 0.6s, transform 0.6s;
 }
-
 .profile-card.visible {
     opacity: 1;
     transform: translateY(0);
 }
-
 .avatar-preview {
     width: 120px;
     height: 120px;
@@ -460,109 +406,85 @@ input[type="file"] {
     object-fit: cover;
     margin-bottom: 16px;
 }
-
 .upload-button {
     margin-top: 8px;
     font-size: 14px;
 }
-
 .info-field {
     margin: 12px 0;
     font-size: 16px;
 }
-
 label.upload-label {
     background: #007BFF;
-    color: white;
+    color: #fff;
     padding: 6px 14px;
     border-radius: 8px;
     cursor: pointer;
-    transition: background 0.3s ease;
+    transition: background 0.3s;
 }
-
 label.upload-label:hover {
     background: #0056b3;
 }
 
-.message {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-    padding: 24px;
-    text-align: center;
-    max-width: 480px;
-    margin: 130px auto;
-}
-
-/* ====== Error and Status Messages ====== */
+/* Сообщения об ошибках и статусах */
 .error-message {
     position: relative;
-    background-color: #f8d7da;
+    background: #f8d7da;
     color: #721c24;
     border: 1px solid #f5c6cb;
     padding: 10px;
     border-radius: 5px;
     font-size: 16px;
     font-family: 'Arial', sans-serif;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     width: 100%;
     max-width: 500px;
     text-align: center;
     z-index: 9999;
-    transition: opacity 0.3s ease-in-out;
+    transition: opacity 0.3s;
     margin-left: auto;
     margin-right: auto;
 }
-
 .error-message.fade-out {
     opacity: 0;
 }
-
 .status-message {
     padding: 20px;
     border-radius: 8px;
     font-size: 18px;
     margin-top: 20px;
 }
-
 .status-message.pending {
-    background-color: #f0f8ff;
+    background: #f0f8ff;
     color: #1e90ff;
 }
-
 .status-message.rejected {
-    background-color: #ffe5e5;
+    background: #ffe5e5;
     color: #cc0000;
 }
-
 .status-message button {
     padding: 10px 20px;
     font-size: 16px;
     border: none;
-    background-color: #007bff;
-    color: white;
+    background: #007bff;
+    color: #fff;
     cursor: pointer;
     border-radius: 4px;
 }
-
 .status-message button:hover {
-    background-color: #0056b3;
+    background: #0056b3;
 }
-
 .error-content {
     opacity: 0;
     transform: translateY(20px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    transition: opacity 0.6s, transform 0.6s;
 }
-
 .error-content.visible {
     opacity: 1;
     transform: translateY(0);
 }
 
 /* ====== Media Queries ====== */
-
-/* Min-width: 769px */
 @media (min-width: 769px) {
     .header {
         flex-direction: row;
@@ -570,57 +492,30 @@ label.upload-label:hover {
         align-items: center;
         padding: 10px 5%;
     }
-
     .header-links {
         margin-top: 0;
         width: auto;
         justify-content: flex-end;
         border-top: none;
         padding: 0;
-        background-color: transparent;
+        background: transparent;
     }
-
-    .header-logo {
-        height: 75px;
-    }
-
-    .header-title {
-        font-size: 24px;
-    }
-
-    .register-section .action-buttons {
-        justify-content: flex-start;
-    }
-
-    .vote-section .action-buttons {
-        justify-content: flex-end;
-    }
+    .header-logo { height: 75px; }
+    .header-title { font-size: 24px; }
+    .register-section .action-buttons { justify-content: flex-start; }
+    .vote-section .action-buttons { justify-content: flex-end; }
 }
 
-/* Max-width: 768px */
 @media (max-width: 768px) {
-    .avatar-wrapper {
-        transition: none;  /* Отключаем трансформацию */
-        position: relative; /* Делаем позиционирование относительно родителя */
-    }
-
-    .avatar-wrapper:hover .avatar-name {
-        transform: none; /* Убираем сдвиг */
-    }
-
-    /* Определяем явное положение элемента для предотвращения сдвигов */
+    .avatar-wrapper { transition: none; position: relative; }
+    .avatar-wrapper:hover .avatar-name { transform: none; }
     .header-name, .header-wrapper {
         font-size: 14px;
         position: relative;
         left: 0;
         top: 0;
     }
-
-    .content-section:first-child {
-        position: relative;
-        padding-bottom: 70px;
-    }
-
+    .content-section:first-child { position: relative; padding-bottom: 70px; }
     .content-section:first-child .action-buttons {
         position: absolute;
         bottom: 0;
@@ -632,57 +527,21 @@ label.upload-label:hover {
         width: auto;
         justify-content: center;
     }
-
     .content-section {
         display: flex;
         flex-wrap: wrap;
         margin-bottom: 30px;
     }
-
-    .section-image, .section-text {
-        padding: 15px;
-    }
-
-    .section-image img {
-        max-width: 100%;
-        max-height: 200px;
-    }
-
+    .section-image, .section-text { padding: 15px; }
+    .section-image img { max-width: 100%; max-height: 200px; }
     .content-section:first-child .section-image,
-    .vote-section .section-image {
-        flex: 0 0 40%;
-        max-width: 40%;
-        order: 1;
-    }
-
+    .vote-section .section-image { flex: 0 0 40%; max-width: 40%; order: 1; }
     .content-section:first-child .section-text,
-    .vote-section .section-text {
-        flex: 0 0 60%;
-        max-width: 60%;
-        order: 2;
-    }
-
-    .register-section .section-text {
-        flex: 0 0 60%;
-        max-width: 60%;
-        order: 1;
-    }
-
-    .register-section .section-image {
-        flex: 0 0 40%;
-        max-width: 40%;
-        order: 2;
-    }
-
-    .section-text h2 {
-        font-size: 18px;
-        margin-bottom: 8px;
-    }
-
-    .section-text p {
-        font-size: 14px;
-    }
-
+    .vote-section .section-text { flex: 0 0 60%; max-width: 60%; order: 2; }
+    .register-section .section-text { flex: 0 0 60%; max-width: 60%; order: 1; }
+    .register-section .section-image { flex: 0 0 40%; max-width: 40%; order: 2; }
+    .section-text h2 { font-size: 18px; margin-bottom: 8px; }
+    .section-text p { font-size: 14px; }
     .action-buttons {
         gap: 8px;
         overflow-x: auto;
@@ -692,11 +551,7 @@ label.upload-label:hover {
         justify-content: center;
         width: 100%;
     }
-
-    .action-buttons::-webkit-scrollbar {
-        display: none;
-    }
-
+    .action-buttons::-webkit-scrollbar { display: none; }
     .action-button {
         padding: 8px 12px;
         font-size: 14px;
@@ -707,128 +562,54 @@ label.upload-label:hover {
         text-overflow: ellipsis;
         max-width: 45vw;
     }
-
     .register-section .section-text .action-buttons,
     .vote-section .section-text .action-buttons {
         justify-content: center;
         margin-left: auto;
         margin-right: auto;
     }
-
-    .message .profile-card {
-        margin-top: 150px;
-    }
+    .message .profile-card { margin-top: 150px; }
 }
 
-/* Max-width: 600px */
 @media (max-width: 600px) {
-    .header {
-        flex-direction: column;
-        padding: 10px 0;
-    }
-
-    .header-top {
-        padding: 0 5%;
-    }
-
-    .header-left {
-        flex-direction: row;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    .header-title {
-        font-size: 16px;
-        flex: 1;
-        min-width: 200px;
-    }
-
-    .header-logo {
-        height: 55px;
-    }
-
-    .header-links {
-        font-size: 14px;
-        gap: 10px;
-        padding: 10px 5%;
-    }
+    .header { flex-direction: column; padding: 10px 0; }
+    .header-top { padding: 0 5%; }
+    .header-left { flex-direction: row; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .header-title { font-size: 16px; flex: 1; min-width: 200px; }
+    .header-logo { height: 55px; }
+    .header-links { font-size: 14px; gap: 10px; padding: 10px 5%; }
 }
 
-/* Max-width: 480px */
 @media (max-width: 480px) {
-
-    .avatar-wrapper:hover {
-        background-color: transparent; /* Убираем фоновую анимацию */
-    }
-    .avatar-name {
-        opacity: 1; /* Убираем анимацию opacity */
-        transform: none; /* Убираем анимацию сдвига */
-        font-size: 14px;
-    }
-
-    .section-image, .section-text {
-        padding: 10px;
-    }
-
+    .avatar-wrapper:hover { background: transparent; }
+    .avatar-name { opacity: 1; transform: none; font-size: 14px; }
+    .section-image, .section-text { padding: 10px; }
     .content-section:first-child .action-button {
         min-width: 120px;
         font-size: 13px;
         padding: 8px 4px;
     }
-
     .register-section .section-image img {
         max-width: 90%;
         max-height: 250px;
     }
-
-    .section-text h2 {
-        font-size: 16px;
-    }
-
-    .section-text p {
-        font-size: 13px;
-    }
-
-    .action-button {
-        font-size: 13px;
-        padding: 7px 10px;
-    }
+    .section-text h2 { font-size: 16px; }
+    .section-text p { font-size: 13px; }
+    .action-button { font-size: 13px; padding: 7px 10px; }
 }
 
-/* Max-width: 350px */
 @media (max-width: 350px) {
-    .content-section:first-child .action-buttons {
-        gap: 5px;
-    }
-
+    .content-section:first-child .action-buttons { gap: 5px; }
     .content-section:first-child .section-image,
     .register-section .section-image,
-    .vote-section .section-image {
-        flex: 0 0 35%;
-        max-width: 35%;
-    }
-
+    .vote-section .section-image { flex: 0 0 35%; max-width: 35%; }
     .content-section:first-child .section-text,
     .register-section .section-text,
-    .vote-section .section-text {
-        flex: 0 0 65%;
-        max-width: 65%;
-    }
-
-    .action-buttons {
-        gap: 5px;
-    }
-
-    .action-button {
-        font-size: 12px;
-        min-width: 80px;
-        padding: 6px 8px;
-    }
+    .vote-section .section-text { flex: 0 0 65%; max-width: 65%; }
+    .action-buttons { gap: 5px; }
+    .action-button { font-size: 12px; min-width: 80px; padding: 6px 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    body {
-        scroll-behavior: auto;
-    }
+    body { scroll-behavior: auto; }
 }
