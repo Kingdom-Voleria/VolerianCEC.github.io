@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let user = await getCurrentUser();
 
-    // Secton animation
+    // Secton animation (универсально для всех секций с .content-section)
     const sections = document.querySelectorAll('.content-section');
     function checkVisibility() {
         sections.forEach(section => {
@@ -30,7 +30,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
-    checkVisibility();
+    // Для анимации при первой отрисовке
+    setTimeout(checkVisibility, 10);
     window.addEventListener('scroll', checkVisibility);
 
     // Smooth scroll for buttons
@@ -47,25 +48,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
-
-    // Election block animation
-    const electionBlocks = document.querySelectorAll('.selection-block, .title-active, .title-inactive');
-    electionBlocks.forEach(block => {
-        block.style.opacity = '0';
-        block.style.transform = 'translateY(20px)';
-        block.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-    });
-    function checkElectionVisibility() {
-        electionBlocks.forEach(block => {
-            const rect = block.getBoundingClientRect();
-            if (rect.top <= window.innerHeight * 0.8 && rect.bottom >= window.innerHeight * 0.2) {
-                block.style.opacity = '1';
-                block.style.transform = 'translateY(0)';
-            }
-        });
-    }
-    checkElectionVisibility();
-    window.addEventListener('scroll', checkElectionVisibility);
 
     // Replace "Registration" link with avatar/profile if logged in
     async function setupProfileAvatar() {
@@ -378,6 +360,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const statusBox = document.querySelector(`.status-${user?.status || 'not-found'}`);
     if (statusBox) statusBox.style.display = 'flex';
+
+    const elections = document.querySelector(".elections-block")
+    if (elections) {
+        requestAnimationFrame(() => {
+            elections.classList.add("visible")
+        })
+    }
 
     // === Error page ===
     if (currentPage === 'error.html') {

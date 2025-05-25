@@ -43,7 +43,10 @@ app.use(session({
 }));
 
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: [
+        'http://localhost:3000',
+        'https://kingdom-voleria.github.io'
+    ],
     credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -77,7 +80,7 @@ app.get('/adminpanel.html', (req, res) => {
     ) {
         return res.sendFile(path.join(__dirname, 'adminpanel.html'));
     } else {
-        return res.redirect('/index.html');
+        return res.redirect('/error.html');
     }
 });
 
