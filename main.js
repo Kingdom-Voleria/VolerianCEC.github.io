@@ -1,11 +1,5 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyC6SRgkyvjChJhrXrezJEhk4J9MeAUOjYU",
   authDomain: "voleriancec-9939b.firebaseapp.com",
@@ -17,9 +11,8 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
+const app = firebase.initializeApp(firebaseConfig);
+const analytics = firebase.analytics(app);
 
 document.addEventListener('DOMContentLoaded', async () => {
     const currentPage = window.location.pathname.split('/').pop();
@@ -53,7 +46,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
-    // Для анимации при первой отрисовке
     setTimeout(checkVisibility, 10);
     window.addEventListener('scroll', checkVisibility);
 
