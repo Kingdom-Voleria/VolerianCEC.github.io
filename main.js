@@ -1,3 +1,26 @@
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyC6SRgkyvjChJhrXrezJEhk4J9MeAUOjYU",
+  authDomain: "voleriancec-9939b.firebaseapp.com",
+  projectId: "voleriancec-9939b",
+  storageBucket: "voleriancec-9939b.firebasestorage.app",
+  messagingSenderId: "169402045707",
+  appId: "1:169402045707:web:a84185098e7a807355be0e",
+  measurementId: "G-B9ZB0Y0XM8"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+
 document.addEventListener('DOMContentLoaded', async () => {
     const currentPage = window.location.pathname.split('/').pop();
 

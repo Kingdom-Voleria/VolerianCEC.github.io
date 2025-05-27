@@ -1,9 +1,21 @@
+// Firebase Admin SDK и Firestore инициализация
+const { initializeApp, applicationDefault, cert } = require('firebase-admin/app');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+
+// Подключение через сервисный аккаунт (укажите путь к вашему JSON-файлу)
+const serviceAccount = require('./serviceAccountKey.json');
+
+initializeApp({
+  credential: cert(serviceAccount)
+});
+
+const db = getFirestore();
+
+// Далее — обычные импорты и основной код сервера:
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
-const SQLiteStore = require('connect-sqlite3')(session);
 const path = require('path');
-const Database = require('better-sqlite3');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const crypto = require('crypto');
@@ -27,13 +39,12 @@ app.use(rateLimit({
     message: { success: false, message: "Слишком много запросов, попробуйте позже." }
 }));
 
-// Sessions
+// sessions (in-memory, для production лучше сделать FirestoreStore)
 app.use(session({
     name: 'session',
     secret: 'f3c6a1d3b2c6e1f1a8d5a9c1c6f4b7c5d8a9b6e0d8f9a0b7a9e5b4c8d6a7f2',
     resave: false,
     saveUninitialized: false,
-    store: new SQLiteStore({ db: 'sessions.sqlite', dir: './' }),
     cookie: {
         httpOnly: true,
         secure: false,
@@ -95,28 +106,56 @@ app.get('/vote.html', (req, res) => {
 
 app.use(express.static(path.join(__dirname)));
 
-// Database setup
-const db = new Database('users.db');
-try { db.prepare('ALTER TABLE users ADD COLUMN password TEXT').run(); } catch (e) {}
-db.prepare(`CREATE TABLE IF NOT EXISTS users (
-        fullname TEXT NOT NULL,
-        civilnumber TEXT PRIMARY KEY,
-        avatar TEXT,
-        status TEXT,
-        votingStatus TEXT,
-        password TEXT
-    )`).run();
-db.prepare("UPDATE users SET votingStatus = 'novote' WHERE votingStatus IS NULL OR votingStatus = ''").run();
-db.prepare(`CREATE TABLE IF NOT EXISTS votes (
-        option TEXT PRIMARY KEY,
-        count INTEGER
-    )`).run();
-['option1', 'option2'].forEach(option => {
-    const exists = db.prepare('SELECT 1 FROM votes WHERE option = ?').get(option);
-    if (!exists) db.prepare('INSERT INTO votes (option, count) VALUES (?, ?)')
-        .run(option, 0);
-});
+// --- Helper functions for Firebase ---
+async function getUserByCivilnumber(civilnumber) {
+    const doc = await db.collection('users').doc(civilnumber).get();
+    return doc.exists ? doc.data() : null;
+}
+async function setUserByCivilnumber(civilnumber, data) {
+    await db.collection('users').doc(civilnumber).set(data, { merge: true });
+}
+async function deleteUserByCivilnumber(civilnumber) {
+    await db.collection('users').doc(civilnumber).delete();
+}
+async function getAllUsers() {
+    const snap = await db.collection('users').get();
+    return snap.docs.map(d => d.data());
+}
+async function getPendingUsers() {
+    const snap = await db.collection('users').where('status', '==', 'pending').get();
+    return snap.docs.map(d => d.data());
+}
+async function getVoteOption(option) {
+    const doc = await db.collection('votes').doc(option).get();
+    return doc.exists ? doc.data() : null;
+}
+async function setVoteOption(option, data) {
+    await db.collection('votes').doc(option).set(data, { merge: true });
+}
+async function getAllVotes() {
+    const snap = await db.collection('votes').get();
+    return snap.docs.map(d => d.data());
+}
+async function resetAllVotes() {
+    const snap = await db.collection('votes').get();
+    const batch = db.batch();
+    snap.docs.forEach(doc => {
+        batch.update(doc.ref, { count: 0 });
+    });
+    await batch.commit();
+}
+async function initVotes() {
+    const options = ['option1', 'option2'];
+    for(const option of options) {
+        const existing = await getVoteOption(option);
+        if (!existing) {
+            await setVoteOption(option, { option, count: 0 });
+        }
+    }
+}
+initVotes();
 
+// --- Validation ---
 function isValidFullname(name) {
     const parts = name.trim().split(/\s+/);
     return parts.length >= 2 && parts.every(part => /^[A-Za-zА-Яа-я]{3,}$/.test(part));
@@ -142,9 +181,9 @@ function saveUserToSession(req, user) {
 
 // API endpoints
 
-app.get('/api/me', (req, res) => {
+app.get('/api/me', async (req, res) => {
     if (req.session.user) {
-        const user = db.prepare('SELECT * FROM users WHERE civilnumber = ?').get(req.session.user.civilnumber);
+        const user = await getUserByCivilnumber(req.session.user.civilnumber);
         if (user) {
             req.session.user = user;
             return res.json({ user });
@@ -153,7 +192,7 @@ app.get('/api/me', (req, res) => {
     res.json({ user: null });
 });
 
-app.post('/api/register', (req, res) => {
+app.post('/api/register', async (req, res) => {
     const { fullname, civilnumber, password } = req.body;
     if (!fullname || !civilnumber || !password) {
         return res.status(400).json({ success: false, message: 'Все поля обязательны' });
@@ -167,36 +206,34 @@ app.post('/api/register', (req, res) => {
     if (!isValidPassword(password)) {
         return res.status(400).json({ success: false, message: 'Пароль должен быть не менее 8 символов и содержать буквы и цифры.' });
     }
-    const existing = db.prepare('SELECT * FROM users WHERE civilnumber = ?').get(civilnumber);
+    const existing = await getUserByCivilnumber(civilnumber);
     if (existing) {
         return res.status(400).json({ success: false, message: 'Пользователь уже зарегистрирован' });
     }
-    db.prepare(
-        'INSERT INTO users (fullname, civilnumber, avatar, status, votingStatus, password) VALUES (?, ?, ?, ?, ?, ?)'
-    ).run(fullname, civilnumber, null, 'pending', 'novote', password);
-
-    const user = { fullname, civilnumber, status: 'pending', votingStatus: 'novote', avatar: null };
-    saveUserToSession(req, user);
-
-    res.json({ success: true, message: 'Регистрация прошла успешно', user });
+    const userData = {
+        fullname, civilnumber, avatar: null, status: 'pending', votingStatus: 'novote', password
+    };
+    await setUserByCivilnumber(civilnumber, userData);
+    saveUserToSession(req, userData);
+    res.json({ success: true, message: 'Регистрация прошла успешно', user: userData });
 });
 
-app.post('/api/update-avatar', checkCSRF, (req, res) => {
+app.post('/api/update-avatar', checkCSRF, async (req, res) => {
     const user = req.session.user;
     const { avatar } = req.body;
     if (!user) return res.status(401).json({ success: false, message: 'Нет авторизации' });
     if (!avatar || typeof avatar !== 'string' || !avatar.startsWith('data:image/')) {
         return res.status(400).json({ success: false, message: 'Некорректные данные аватара' });
     }
-    db.prepare('UPDATE users SET avatar = ? WHERE civilnumber = ?').run(avatar, user.civilnumber);
+    await setUserByCivilnumber(user.civilnumber, { avatar });
     user.avatar = avatar;
     req.session.user = user;
     res.json({ success: true, message: 'Аватарка обновлена', user });
 });
 
-app.get('/api/user-status/:civilnumber', (req, res) => {
+app.get('/api/user-status/:civilnumber', async (req, res) => {
     const { civilnumber } = req.params;
-    const user = db.prepare('SELECT * FROM users WHERE civilnumber = ?').get(civilnumber);
+    const user = await getUserByCivilnumber(civilnumber);
     if (!user) {
         return res.status(404).json({ success: false, message: 'Пользователь не найден' });
     }
@@ -207,46 +244,53 @@ app.get('/api/user-status/:civilnumber', (req, res) => {
     res.json({ success: true, status: user.status, votingStatus: user.votingStatus });
 });
 
-app.get('/api/users', (req, res) => {
+app.get('/api/users', async (req, res) => {
     try {
-        const users = db.prepare('SELECT fullname, civilnumber, avatar, status, votingStatus FROM users').all();
-        res.json({ success: true, users });
+        const users = await getAllUsers();
+        // Оставляем только нужные поля
+        const mapped = users.map(({fullname, civilnumber, avatar, status, votingStatus}) =>
+            ({ fullname, civilnumber, avatar, status, votingStatus }));
+        res.json({ success: true, users: mapped });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Ошибка получения пользователей', error: err.message });
     }
 });
 
-app.get('/api/users/pending', (req, res) => {
+app.get('/api/users/pending', async (req, res) => {
     try {
-        const users = db.prepare('SELECT * FROM users WHERE status = ?').all('pending');
+        const users = await getPendingUsers();
         res.json({ success: true, users });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Ошибка получения пользователей со статусом pending', error: err.message });
     }
 });
 
-app.post('/api/vote', checkCSRF, (req, res) => {
+app.post('/api/vote', checkCSRF, async (req, res) => {
     const sessionUser = req.session.user;
     const { option } = req.body;
     if (!sessionUser) return res.status(401).json({ success: false, message: 'Нет авторизации' });
-    const user = db.prepare('SELECT * FROM users WHERE civilnumber = ?').get(sessionUser.civilnumber);
+    const user = await getUserByCivilnumber(sessionUser.civilnumber);
     if (!user) return res.status(404).json({ success: false, message: 'Пользователь не найден' });
     if (user.status !== 'approved')
         return res.status(403).json({ success: false, message: 'Пользователь не одобрен для голосования' });
     if (user.votingStatus === 'vote')
         return res.status(400).json({ success: false, message: 'Вы уже голосовали' });
-    const voteOption = db.prepare('SELECT * FROM votes WHERE option = ?').get(option);
+    const voteOption = await getVoteOption(option);
     if (!voteOption)
         return res.status(400).json({ success: false, message: 'Неверный вариант голосования' });
-    db.prepare('UPDATE votes SET count = count + 1 WHERE option = ?').run(option);
-    db.prepare('UPDATE users SET votingStatus = ? WHERE civilnumber = ?').run('vote', user.civilnumber);
+    // increment vote count atomically
+    await db.collection('votes').doc(option).update({ count: FieldValue.increment(1) });
+    await setUserByCivilnumber(user.civilnumber, { votingStatus: 'vote' });
     req.session.user.votingStatus = 'vote';
     res.json({ success: true, message: 'Голос принят' });
 });
 
-app.delete('/api/users', checkCSRF, (req, res) => {
+app.delete('/api/users', checkCSRF, async (req, res) => {
     try {
-        db.prepare('DELETE FROM users').run();
+        const usersSnap = await db.collection('users').get();
+        const batch = db.batch();
+        usersSnap.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
         if (req.session.user) req.session.destroy(() => {});
         res.json({ success: true, message: 'Все пользователи успешно удалены.' });
     } catch (err) {
@@ -254,28 +298,28 @@ app.delete('/api/users', checkCSRF, (req, res) => {
     }
 });
 
-app.delete('/api/user/:civilnumber', checkCSRF, (req, res) => {
+app.delete('/api/user/:civilnumber', checkCSRF, async (req, res) => {
     const { civilnumber } = req.params;
-    const user = db.prepare('SELECT * FROM users WHERE civilnumber = ?').get(civilnumber);
+    const user = await getUserByCivilnumber(civilnumber);
     if (!user) {
         return res.status(404).json({ success: false, message: 'Пользователь не найден' });
     }
-    db.prepare('DELETE FROM users WHERE civilnumber = ?').run(civilnumber);
+    await deleteUserByCivilnumber(civilnumber);
     if (req.session.user && req.session.user.civilnumber === civilnumber) req.session.destroy(() => {});
     res.json({ success: true, message: 'Пользователь успешно удалён', user });
 });
 
-app.get('/api/user-info/:civilnumber', (req, res) => {
+app.get('/api/user-info/:civilnumber', async (req, res) => {
     const { civilnumber } = req.params;
-    const user = db.prepare('SELECT * FROM users WHERE civilnumber = ?').get(civilnumber);
+    const user = await getUserByCivilnumber(civilnumber);
     if (!user) {
         return res.status(404).json({ success: false, message: 'Пользователь не найден' });
     }
     res.json({ success: true, user });
 });
 
-app.get('/api/votes', (req, res) => {
-    const result = db.prepare('SELECT * FROM votes').all();
+app.get('/api/votes', async (req, res) => {
+    const result = await getAllVotes();
     const formatted = {};
     result.forEach(row => {
         formatted[row.option] = row.count;
@@ -283,20 +327,23 @@ app.get('/api/votes', (req, res) => {
     res.json({ success: true, votes: formatted });
 });
 
-app.delete('/api/votes', checkCSRF, (req, res) => {
-    db.prepare('UPDATE votes SET count = 0').run();
+app.delete('/api/votes', checkCSRF, async (req, res) => {
+    await resetAllVotes();
     res.json({ success: true, message: 'Все результаты голосования были сброшены.' });
 });
 
-app.post('/api/reset-voting-status', checkCSRF, (req, res) => {
-    const users = db.prepare('SELECT * FROM users').all();
+app.post('/api/reset-voting-status', checkCSRF, async (req, res) => {
+    const usersSnap = await db.collection('users').get();
     let updatedCount = 0;
-    users.forEach(user => {
+    const batch = db.batch();
+    usersSnap.forEach(doc => {
+        const user = doc.data();
         if (user.votingStatus === 'vote') {
-            db.prepare('UPDATE users SET votingStatus = ? WHERE civilnumber = ?').run('novote', user.civilnumber);
+            batch.update(doc.ref, { votingStatus: 'novote' });
             updatedCount++;
         }
     });
+    await batch.commit();
     res.json({ success: true, message: `Статусы голосования сброшены у ${updatedCount} пользователей.` });
 });
 
@@ -322,21 +369,21 @@ app.get('/api/admin-authenticated', (req, res) => {
 app.get('/api/admin-content', (req, res) => {
     const token = req.headers['authorization'];
     if (token && issuedAdminTokens.has(token.replace('Bearer ', ''))) {
-        return res.send(`
-      <h1>Панель администратора</h1>
+        return res.send(
+      `<h1>Панель администратора</h1>
       <button onclick="resetVotingStatuses()">Сбросить статус голосования всем пользователям</button>
       <button onclick="deleteAllUsers()">Удалить всех пользователей (включая cookie)</button>
       <button onclick="simplifyCheck()">Запретить переход на vote.html</button>
       <button onclick="restoreCheck()">Разрешить переход на vote.html</button>
       <h3>Удаление пользователя по Civil Number</h3>
       <input type="text" id="civilInput" placeholder="Введите гражданский номер">
-      <button onclick="deleteUserByCivilnumber()">Удалить пользователя</button>
-    `);
+      <button onclick="deleteUserByCivilnumber()">Удалить пользователя</button>`
+    );
     }
     return res.status(403).send('Нет доступа');
 });
 
-// Main.js check modification
+// Main.js check modification (оставляем как есть)
 app.post('/api/simplify-check', checkCSRF, (req, res) => {
     try {
         let content = fs.readFileSync(MAIN_JS_PATH, 'utf-8');
@@ -368,17 +415,16 @@ app.post('/api/restore-check', checkCSRF, (req, res) => {
     }
 });
 
-app.post('/api/moderate', (req, res) => {
+app.post('/api/moderate', async (req, res) => {
     const { civilnumber, status } = req.body;
     if (!civilnumber || !['approved', 'rejected', 'pending'].includes(status)) {
         return res.status(400).json({ success: false, message: 'Некорректные данные.' });
     }
-    const user = db.prepare('SELECT * FROM users WHERE civilnumber = ?').get(civilnumber);
+    const user = await getUserByCivilnumber(civilnumber);
     if (!user) {
         return res.status(404).json({ success: false, message: 'Пользователь не найден.' });
     }
-    db.prepare('UPDATE users SET status = ? WHERE civilnumber = ?')
-        .run(status, civilnumber);
+    await setUserByCivilnumber(civilnumber, { status });
     if (req.session.user && req.session.user.civilnumber === civilnumber) {
         req.session.user.status = status;
     }
