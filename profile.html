@@ -3,18 +3,16 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Ошибка — ЦИК Королевства Волерия</title>
+    <title>ЦИК Королевства Волерия</title>
     <link rel="stylesheet" href="style.css">
 
     <link rel="icon" href="image/favicon/favicon-64x64.png" sizes="64x64" type="image/png">
     <link rel="icon" href="image/favicon/favicon-48x48.png" sizes="48x48" type="image/png">
     <link rel="icon" href="image/favicon/favicon-32x32.png" sizes="32x32" type="image/png">
     <link rel="icon" href="image/favicon/favicon-16x16.png" sizes="16x16" type="image/png">
-
-    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-analytics-compat.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-analytics-compat.js"></script>
 </head>
 <body>
     <!-- TOP MENU -->
@@ -30,15 +28,15 @@
         </nav>
     </header>
 
-    <!-- ERROR BLOCK -->
-    <div class="error-content">
-        <div style="text-align: center; margin-top: 100px;">
-            <h1 style="font-size: 124px; color: #0066cc;" id="error-code">404</h1>
-            <p style="font-size: 24px; color: #555;" id="error-message">Страница не найдена</p>
+    <!-- PROFILE BLOCK -->
+    <div class="profile-card" id="profile-card">
+        <img src="" alt="Avatar" class="avatar-preview" id="avatarPreview">
+        <div>
+            <label for="avatarInput" class="upload-label">Загрузить аватар</label>
+            <input type="file" id="avatarInput" accept="image/*">
         </div>
-        <div class="action-buttons-wrapper" style="margin-top: 30px;">
-            <a href="index.html" class="action-button">На главную</a>
-        </div>
+        <div class="info-field"><strong>ФИО:</strong> <span id="userFullname"></span></div>
+        <div class="info-field"><strong>Гражданский номер:</strong> <span id="userCivilnumber"></span></div>
     </div>
 
     <script type="module" src="main.js"></script>

@@ -70,11 +70,3 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
-
-# IDE
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db

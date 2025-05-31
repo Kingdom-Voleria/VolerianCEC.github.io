@@ -1,3 +1,4 @@
+
 // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyC6SRgkyvjChJhrXrezJEhk4J9MeAUOjYU",
@@ -25,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function getCurrentUser() {
-        const res = await fetch('https://voleriancec-9939b-f148c.web.app/api/me', { credentials: 'include' });
+        const res = await fetch('http://localhost:3000/api/me', { credentials: 'include' });
         if (res.ok) {
             const data = await res.json();
             return data.user || null;
@@ -70,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!navLinks) return;
         const profileLink = [...navLinks.children].find(link => link.textContent.trim() === 'Регистрация');
         if (!profileLink) return;
-        const freshUserRes = await fetch(`https://voleriancec-9939b-f148c.web.app/api/user-info/${user.civilnumber}`, { credentials: 'include' });
+        const freshUserRes = await fetch(`http://localhost:3000/api/user-info/${user.civilnumber}`, { credentials: 'include' });
         const freshUserData = await freshUserRes.json();
         const freshUser = freshUserData.success && freshUserData.user ? freshUserData.user : user;
         const avatarWrapper = document.createElement('div');
@@ -96,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.location.href = 'registration.html';
             return;
         }
-        const res = await fetch(`https://voleriancec-9939b-f148c.web.app/api/user-info/${user.civilnumber}`, { credentials: 'include' });
+        const res = await fetch(`http://localhost:3000/api/user-info/${user.civilnumber}`, { credentials: 'include' });
         const data = await res.json();
         if (!data.success || !data.user) {
             window.location.href = 'registration.html';
@@ -148,7 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (user.status === 'rejected') {
                 document.getElementById('resubmit-button').addEventListener('click', async () => {
                     const csrfToken = await getCSRFToken();
-                    await fetch(`https://voleriancec-9939b-f148c.web.app/api/user/${user.civilnumber}`, {
+                    await fetch(`http://localhost:3000/api/user/${user.civilnumber}`, {
                         method: 'DELETE',
                         credentials: 'include',
                         headers: { 'X-CSRF-Token': csrfToken }
@@ -184,14 +185,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     reader.onloadend = async function () {
                         const avatar = reader.result;
                         const csrfToken = await getCSRFToken();
-                        const res = await fetch('https://voleriancec-9939b-f148c.web.app/api/update-avatar', {
+                        const res = await fetch('http://localhost:3000/api/update-avatar', {
                             method: 'POST',
                             credentials: 'include',
                             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
                             body: JSON.stringify({ avatar })
                         });
                         if (res.ok) {
-                            const updatedUserRes = await fetch(`https://voleriancec-9939b-f148c.web.app/api/user-info/${user.civilnumber}`, { credentials: 'include' });
+                            const updatedUserRes = await fetch(`http://localhost:3000/api/user-info/${user.civilnumber}`, { credentials: 'include' });
                             const updatedData = await updatedUserRes.json();
                             if (updatedData.success && updatedData.user) {
                                 user = updatedData.user;
@@ -249,7 +250,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 try {
-                    const res = await fetch('https://voleriancec-9939b-f148c.web.app/api/register', {
+                    const res = await fetch('http://localhost:3000/api/register', {
                         method: 'POST',
                         credentials: 'include',
                         headers: { 'Content-Type': 'application/json' },
@@ -311,7 +312,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        fetch(`https://voleriancec-9939b-f148c.web.app/api/user-status/${user.civilnumber}`, { credentials: 'include' })
+        fetch(`http://localhost:3000/api/user-status/${user.civilnumber}`, { credentials: 'include' })
             .then(res => res.json())
             .then(data => {
                 if (data.votingStatus === 'vote') {
@@ -333,7 +334,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const csrfToken = await getCSRFToken();
-            const res = await fetch('https://voleriancec-9939b-f148c.web.app/api/vote', {
+            const res = await fetch('http://localhost:3000/api/vote', {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
