@@ -2,7 +2,7 @@
 const { initializeApp, applicationDefault, cert } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 
-// Подключение через сервисный аккаунт (укажите путь к вашему JSON-файлу)
+// Подключение через сервисный аккаунт
 const serviceAccount = require('./serviceAccountKey.json');
 
 initializeApp({
@@ -11,7 +11,6 @@ initializeApp({
 
 const db = getFirestore();
 
-// Далее — обычные импорты и основной код сервера:
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
@@ -55,8 +54,8 @@ app.use(session({
 
 app.use(cors({
     origin: [
-        'http://localhost:3000',
         'https://kingdom-voleria.github.io'
+        'https://voleriancec-9939b-f148c.web.app'
     ],
     credentials: true
 }));
@@ -79,32 +78,6 @@ function checkCSRF(req, res, next) {
         res.status(403).json({ success: false, message: 'Invalid CSRF token' });
     }
 }
-
-// Admin panel (access restricted)
-app.get('/adminpanel.html', (req, res) => {
-    const user = req.session.user;
-    if (
-        user &&
-        user.fullname === 'Мярьянов Вадим Маркович' &&
-        user.civilnumber === '00010' &&
-        user.status === 'approved'
-    ) {
-        return res.sendFile(path.join(__dirname, 'adminpanel.html'));
-    } else {
-        return res.redirect('/error.html');
-    }
-});
-
-// Vote page (access restricted)
-app.get('/vote.html', (req, res) => {
-    const user = req.session.user;
-    if (!user || user.status !== 'approved') {
-        return res.redirect('/elections.html');
-    }
-    return res.sendFile(path.join(__dirname, 'vote.html'));
-});
-
-app.use(express.static(path.join(__dirname)));
 
 // --- Helper functions for Firebase ---
 async function getUserByCivilnumber(civilnumber) {
@@ -179,6 +152,49 @@ function saveUserToSession(req, user) {
     };
 }
 
+// Admin panel (access restricted) - обновлённая версия с проверкой пользователя в базе
+app.get('/adminpanel.html', async (req, res) => {
+    const sessionUser = req.session.user;
+    if (
+        sessionUser &&
+        sessionUser.fullname === 'Мярьянов Вадим Маркович' &&
+        sessionUser.civilnumber === '00010' &&
+        sessionUser.status === 'approved'
+    ) {
+        // Проверяем существование пользователя в базе
+        const userInDb = await getUserByCivilnumber(sessionUser.civilnumber);
+        if (
+            userInDb &&
+            userInDb.fullname === 'Мярьянов Вадим Маркович' &&
+            userInDb.civilnumber === '00010' &&
+            userInDb.status === 'approved'
+        ) {
+            req.session.user = userInDb; // обновим сессию свежими данными
+            return res.sendFile(path.join(__dirname, 'adminpanel.html'));
+        }
+    }
+    req.session.destroy(() => {});
+    return res.redirect('/error.html');
+});
+
+// Vote page (access restricted)
+app.get('/vote.html', async (req, res) => {
+    const sessionUser = req.session.user;
+    if (!sessionUser) {
+        return res.redirect('/elections.html');
+    }
+    // Проверяем статус в базе
+    const userInDb = await getUserByCivilnumber(sessionUser.civilnumber);
+    if (!userInDb || userInDb.status !== 'approved') {
+        req.session.destroy(() => {});
+        return res.redirect('/elections.html');
+    }
+    req.session.user = userInDb;
+    return res.sendFile(path.join(__dirname, 'vote.html'));
+});
+
+app.use(express.static(path.join(__dirname)));
+
 // API endpoints
 
 app.get('/api/me', async (req, res) => {
@@ -187,6 +203,9 @@ app.get('/api/me', async (req, res) => {
         if (user) {
             req.session.user = user;
             return res.json({ user });
+        } else {
+            // если пользователя больше нет в базе - очищаем сессию
+            req.session.destroy(() => {});
         }
     }
     res.json({ user: null });
@@ -270,7 +289,10 @@ app.post('/api/vote', checkCSRF, async (req, res) => {
     const { option } = req.body;
     if (!sessionUser) return res.status(401).json({ success: false, message: 'Нет авторизации' });
     const user = await getUserByCivilnumber(sessionUser.civilnumber);
-    if (!user) return res.status(404).json({ success: false, message: 'Пользователь не найден' });
+    if (!user) {
+        req.session.destroy(() => {});
+        return res.status(404).json({ success: false, message: 'Пользователь не найден' });
+    }
     if (user.status !== 'approved')
         return res.status(403).json({ success: false, message: 'Пользователь не одобрен для голосования' });
     if (user.votingStatus === 'vote')
