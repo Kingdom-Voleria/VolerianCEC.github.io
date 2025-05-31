@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>ЦИК Королевства Волерия</title>
+	<link rel="stylesheet" href="style.css">
+
+    <link rel="icon" href="image/favicon/favicon-64x64.png" sizes="64x64" type="image/png">
+    <link rel="icon" href="image/favicon/favicon-48x48.png" sizes="48x48" type="image/png">
+    <link rel="icon" href="image/favicon/favicon-32x32.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="image/favicon/favicon-16x16.png" sizes="16x16" type="image/png">
+
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-analytics-compat.js"></script>
+</head>
+<body>
+    <!-- TOP MENU -->
+    <header class="header">
+        <div class="header-left">
+            <img src="image/header_emblem.png" class="header-logo" alt="Герб Королевства Волерия">
+            <h1 class="header-title">Центральная избирательная комиссия <br>Королевства Волерия</h1>
+        </div>
+        <nav class="header-links">
+            <a href="index.html">Главная</a>
+            <a href="elections.html">Голосования</a>
+            <a href="registration.html">Регистрация</a>
+        </nav>
+    </header>
+
+
+    <!-- MAIN BLOCK -->
+    <div class="main-content">
+        <div class="content-section">
+            <div class="section-image">
+                <img src="image/emblem.png" alt="Герб Волерии">
+            </div>
+            <div class="section-text">
+                <h2>Добро пожаловать на сайт ЦИК Королевства Волерия!</h2>
+                <p>На данном сайте организуются выборы и референдумы, проводимые на территории Королевства Волерия. Здесь вы можете зарегистрироваться для участия в электронном голосовании и проголосовать непосредственно на сайте.</p>
+
+                <div class="action-buttons">
+                    <a href="#register" class="action-button" id="register-btn">Как зарегистрироваться?</a>
+                    <a href="#vote" class="action-button" id="vote-btn">Как проголосовать?</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-section" id="register">
+            <div class="section-text">
+                <h2>Как зарегистрироваться на электронное голосование?</h2>
+                <p>Чтобы подать заявку на электронное голосование на сайте ЦИК Королевства Волерия, необходимо перейти во вкладку <a href="registration.html" style="text-decoration: none; color: #0066cc">«Регистрация»</a> и заполнить форму. В форме нужно указать ваше ФИО и личный гражданский номер, который выдается только после получения гражданства Королевства Волерия. После заполнения формы вы должны перейти в <a href="https://vk.com/citizens_volerian" style="text-decoration: none; color: #0066cc">официальное сообщество граждан Волерии</a> в социальной сети «ВКонтакте» и подтвердить регистрацию в личных сообщениях сообщества. Заявка будет рассмотрена в течение суток. Единственная причина, по которой вашу заявку могут отклонить, — некорректно заполненная регистрационная форма на сайте.</p>
+
+                <div class="action-buttons">
+                    <a href="registration.html" class="action-button">Регистрация</a>
+                    <a href="https://vk.com/citizens_volerian" class="action-button">Сообщество</a>
+                </div>
+            </div>
+            <div class="section-image">
+                <img src="image/passport.png" alt="Паспорт Волерии" style="max-width: 60%; border-radius: 16px;">
+            </div>
+        </div>
+        
+        <div class="content-section" id="vote">
+            <div class="section-image">
+                <img src="image/building.png" alt="Здание ЦИК" style="border-radius: 16px;">
+            </div>
+            <div class="section-text">
+                <h2>Как проголосовать?</h2>
+                <p>Чтобы проголосовать, перейдите во вкладку <a href="elections.html" style="text-decoration: none; color: #0066cc;">«Голосования»</a>. Если активных или запланированных голосований нет, отобразится сообщение: «В настоящее время нет активных голосований». Если есть запланированные голосования, проголосовать можно будет только после их начала. При наличии активных голосований вы сможете перейти к электронному бюллетеню, нажав на соответствующий блок. После этого откроется страница голосования, где можно выбрать вариант(ы) ответа и нажать кнопку «Проголосовать» под опросом. Ваш бюллетень будет отправлен в единый реестр, и голос будет засчитан.</p>
+                <div class="action-buttons">
+                    <a href="elections.html" class="action-button">Голосования</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+	<script type="module" src="main.js"></script>
+</body>
+</html>

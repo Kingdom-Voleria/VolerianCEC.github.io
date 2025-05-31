@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>ЦИК Королевства Волерия</title>
+	<link rel="stylesheet" href="style.css">
+
+    <link rel="icon" href="image/favicon/favicon-64x64.png" sizes="64x64" type="image/png">
+    <link rel="icon" href="image/favicon/favicon-48x48.png" sizes="48x48" type="image/png">
+    <link rel="icon" href="image/favicon/favicon-32x32.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="image/favicon/favicon-16x16.png" sizes="16x16" type="image/png">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-analytics-compat.js"></script>
+</head>
+<body>
+    <!-- TOP MENU -->
+    <header class="header">
+        <div class="header-left">
+            <img src="image/header_emblem.png" class="header-logo" alt="Герб Королевства Волерия">
+            <h1 class="header-title">Центральная избирательная комиссия <br>Королевства Волерия</h1>
+        </div>
+        <nav class="header-links">
+            <a href="index.html">Главная</a>
+            <a href="elections.html">Голосования</a>
+            <a href="registration.html">Регистрация</a>
+        </nav>
+    </header>
+
+    <!-- ELECTIONS BLOCK -->
+    <div class="elections-block">
+        <div class="selection-active">
+            <h2 class="title-active">
+                <img src="image/icon/selection.png" class="selection-icon" alt="Иконка голосования">
+                Проходящие голосования
+            </h2>
+
+            <a href="vote.html" id="vote-link" style="text-decoration: none;">
+                <div class="selection-block">
+                    <p class="title-block">Социологический опрос</p>
+                    <p class="selection-description">Социологический опрос о поддержке курса, проводимый правительством Королества Волерия</p>
+                    <p class="selection-date">
+                        <img src="image/icon/date.png" class="date-icon" alt="Иконка даты">
+                        <span class="date-text">15 июня 2025 года - 17 июня 2025 года</span>
+                    </p>
+
+                    <div class="selection-status status-pending" style="display: none;">
+                        <img src="image/icon/hourglass.png" class="status-icon" alt="Песочные часы">
+                        <span>Ваш профиль на проверке. Голосование недоступно</span>
+                    </div>
+                    <div class="selection-status status-approved" style="display: none;">
+                        <img src="image/icon/check_mark.png" class="status-icon" alt="Галочка">
+                        <span class="status-approved">Вы допущены до голосования</span>
+                    </div>
+                    <div class="selection-status status-rejected" style="display: none;">
+                        <img src="image/icon/cross.png" class="status-icon" alt="Крестик">
+                        <span class="status-rejected">Вы не допущены до голосования</span>
+                    </div>
+                    <div class="selection-status status-not-found" style="display: none;">
+                        <img src="image/icon/cross.png" class="status-icon" alt="Крестик">
+                        <span>Профиль отсутствует. Голосование недоступно</span>
+                    </div>
+                </div>
+            </a>
+
+        </div>
+
+        <div class="selection-inactive" style="display: none;">
+            <h2 class="title-inactive">
+                <img src="image/icon/selection.png" class="selection-icon" alt="Иконка голосования">
+                Ближайшие голосования
+            </h2>
+        </div>
+    </div>
+
+	<script type="module" src="main.js"></script>
+</body>
+</html>
