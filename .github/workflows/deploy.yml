@@ -14,9 +14,20 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Copy public files to root
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Copy files to root
         run: |
           cp -r public/* ./
+          rm -rf public
+          rm -rf functions
+          rm -rf node_modules
+          rm package*.json
+          rm firebase.json
+          rm .firebaserc
           
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
