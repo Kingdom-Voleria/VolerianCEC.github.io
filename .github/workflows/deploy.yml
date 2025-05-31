@@ -12,27 +12,18 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      
-      - name: Copy files to root
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Copy static files
         run: |
-          cp -r public/* ./
-          rm -rf public
-          rm -rf functions
-          rm -rf node_modules
-          rm package*.json
-          rm firebase.json
-          rm .firebaserc
+          mkdir -p dist
+          cp -r public/* dist/
           
-      - name: Deploy
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
+          publish_dir: ./dist
           publish_branch: gh-pages
           force_orphan: true 
