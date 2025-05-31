@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ЦИК Королевства Волерия</title>
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="icon" href="image/favicon/favicon-64x64.png" sizes="64x64" type="image/png">
+    <link rel="icon" href="image/favicon/favicon-48x48.png" sizes="48x48" type="image/png">
+    <link rel="icon" href="image/favicon/favicon-32x32.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="image/favicon/favicon-16x16.png" sizes="16x16" type="image/png">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-analytics-compat.js"></script>
+</head>
+<body>
+    <!-- TOP MENU -->
+    <header class="header">
+        <div class="header-left">
+            <img src="image/header_emblem.png" class="header-logo" alt="Герб Королевства Волерия">
+            <h1 class="header-title">Центральная избирательная комиссия <br>Королевства Волерия</h1>
+        </div>
+        <nav class="header-links">
+            <a href="index.html">Главная</a>
+            <a href="elections.html">Голосования</a>
+            <a href="registration.html">Регистрация</a>
+        </nav>
+    </header>
+
+    <!-- VOTING BLOCK -->
+    <div class="voting-block">
+        <h3>Социологический опрос о поддержке курса, проводимый правительством Королевства Волерия</h3>
+        <form id="voteForm">
+            <div class="vote-option">
+                <label for="party1">
+                    <input type="radio" id="party1" name="vote" value="option1">
+                    Я поддерживаю экономический, политический и социальный курс, проводимый правительством Королевства Волерия
+                </label>
+            </div>
+            <div class="vote-option">
+                <label for="party2">
+                    <input type="radio" id="party2" name="vote" value="option2">
+                    Я НЕ поддерживаю экономический, политический и социальный курс, проводимый правительством Королевства Волерия
+                </label>
+            </div>
+            <button type="submit">Проголосовать</button>
+        </form>
+    </div>
+
+    <div id="voted-message" class="message" style="display: none;">
+        <p>Поздравляю, вы проголосовали! Результаты голосования станут известны в течении нескольких дней после окончания голосования</p>
+        <div class="action-buttons-wrapper">
+            <div class="action-buttons">
+                <a href="elections.html" class="action-button">Вернуться к голосованиям</a>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>

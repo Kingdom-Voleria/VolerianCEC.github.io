@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Админ-панель</title>
+  <style>
+    button, input {
+      display: block;
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 16px;
+    }
+  </style>
+
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-analytics-compat.js"></script>
+</head>
+<body>
+<div id="auth-section">
+  <h2>Введите пароль администратора</h2>
+  <input type="password" id="admin-password" placeholder="Пароль">
+  <button onclick="submitAdminPassword()">Войти</button>
+</div>
+
+<div id="admin-content"></div>
+
+<script>
+  // Универсальное получение CSRF-токена
+  async function getCSRFToken() {
+    if (window._csrfToken) return window._csrfToken;
+    const res = await fetch('/api/csrf-token', { credentials: 'include' });
+    const data = await res.json();
+    window._csrfToken = data.csrfToken;
+    return data.csrfToken;
+  }
+
+  async function submitAdminPassword() {
+    const password = document.getElementById('admin-password').value;
+
+    const res = await fetch('http://localhost:3000/api/admin-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+      credentials: 'include'
+    });
+
+    let data;
+    try {
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        throw new Error('Сервер вернул не JSON: ' + text);
+      }
+    } catch (err) {
+      alert('Ошибка авторизации: ' + err.message);
+      return;
+    }
+
+    if (res.ok && data.token) {
+      sessionStorage.setItem('adminToken', data.token);
+
+      const panel = await fetch('http://localhost:3000/api/admin-content', {
+        headers: {
+          'Authorization': `Bearer ${data.token}`
+        },
+        credentials: 'include'
+      });
+
+      if (panel.ok) {
+        const html = await panel.text();
+        const authSection = document.getElementById('auth-section');
+        if (authSection) authSection.remove();
+        document.getElementById('admin-content').innerHTML = html;
+        attachAdminLogic();
+      } else {
+        const errText = await panel.text();
+        alert('Ошибка загрузки панели: ' + panel.status + '\n' + errText);
+      }
+      
+    } else {
+      alert('Неверный пароль');
+    }
+  }
+
+  function attachAdminLogic() {
+    window.resetVotingStatuses = async function() {
+      const csrfToken = await getCSRFToken();
+      fetch('http://localhost:3000/api/reset-voting-status', {
+        method: 'POST',
+        headers: { 'X-CSRF-Token': csrfToken },
+        credentials: 'include'
+      })
+        .then(async response => {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            return response.json();
+          } else {
+            const text = await response.text();
+            throw new Error('Сервер вернул не JSON: ' + text);
+          }
+        })
+        .then(data => alert(data.message || 'Голоса сброшены'))
+        .catch(err => alert('Ошибка при сбросе голосов: ' + err.message));
+    };
+
+    window.deleteAllUsers = async function() {
+      if (confirm('Вы уверены, что хотите удалить ВСЕХ пользователей?')) {
+        const csrfToken = await getCSRFToken();
+        fetch('http://localhost:3000/api/users', {
+          method: 'DELETE',
+          headers: { 'X-CSRF-Token': csrfToken },
+          credentials: 'include'
+        })
+          .then(async response => {
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+              return response.json();
+            } else {
+              const text = await response.text();
+              throw new Error('Сервер вернул не JSON: ' + text);
+            }
+          })
+          .then(data => {
+            alert(data.message);
+          })
+          .catch(err => alert('Ошибка: ' + err.message));
+      }
+    };
+
+    window.deleteUserByCivilnumber = async function() {
+      const civil = document.getElementById('civilInput').value.trim();
+      if (!civil) return alert('Введите гражданский номер');
+      const csrfToken = await getCSRFToken();
+      fetch(`http://localhost:3000/api/user/${civil}`, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-Token': csrfToken },
+        credentials: 'include'
+      })
+        .then(async response => {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            return response.json();
+          } else {
+            const text = await response.text();
+            throw new Error('Сервер вернул не JSON: ' + text);
+          }
+        })
+        .then(data => {
+          if (data.success) {
+            alert(`Пользователь ${data.user.fullname} удалён`);
+          } else {
+            alert(data.message);
+          }
+        })
+        .catch(err => alert('Ошибка: ' + err.message));
+    };
+
+    window.simplifyCheck = async function() {
+      const csrfToken = await getCSRFToken();
+      fetch('http://localhost:3000/api/simplify-check', {
+        method: 'POST',
+        headers: { 'X-CSRF-Token': csrfToken },
+        credentials: 'include'
+      })
+        .then(async res => {
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            return res.json();
+          } else {
+            const text = await res.text();
+            throw new Error('Сервер вернул не JSON: ' + text);
+          }
+        })
+        .then(data => alert(data.message))
+        .catch(err => alert('Ошибка: ' + err.message));
+    };
+
+    window.restoreCheck = async function() {
+      const csrfToken = await getCSRFToken();
+      fetch('http://localhost:3000/api/restore-check', {
+        method: 'POST',
+        headers: { 'X-CSRF-Token': csrfToken },
+        credentials: 'include'
+      })
+        .then(async res => {
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            return res.json();
+          } else {
+            const text = await res.text();
+            throw new Error('Сервер вернул не JSON: ' + text);
+          }
+        })
+        .then(data => alert(data.message))
+        .catch(err => alert('Ошибка: ' + err.message));
+    };
+  }
+</script>
+</body>
+</html>
