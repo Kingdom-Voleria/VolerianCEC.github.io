@@ -1,0 +1,12 @@
+{
+  "name": "voleriancec",
+  "version": "1.0.0",
+  "description": "Volerian CEC Application",
+  "scripts": {
+    "build": "cd functions && npm ci",
+    "deploy": "firebase deploy",
+    "start": "cd functions && npm start"
+  },
+  "private": true,
+  "dependencies": {}
+} 
