@@ -1,6 +1,7 @@
 // Firebase Admin SDK и Firestore инициализация
 const { initializeApp, applicationDefault, cert } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { FirestoreStore } = require('@google-cloud/connect-firestore');
 
 // Подключение через сервисный аккаунт
 const serviceAccount = require('./serviceAccountKey.json');
@@ -38,12 +39,15 @@ app.use(rateLimit({
     message: { success: false, message: "Слишком много запросов, попробуйте позже." }
 }));
 
-// sessions (in-memory, для production лучше сделать FirestoreStore)
+// sessions с FirestoreStore
 app.use(session({
     name: 'session',
     secret: 'f3c6a1d3b2c6e1f1a8d5a9c1c6f4b7c5d8a9b6e0d8f9a0b7a9e5b4c8d6a7f2',
     resave: false,
     saveUninitialized: false,
+    store: new FirestoreStore({
+        dataset: db
+    }),
     cookie: {
         httpOnly: true,
         secure: false,

@@ -2,7 +2,6 @@
   "dependencies": {
     "@google-cloud/connect-firestore": "^3.0.0",
     "bcrypt": "^6.0.0",
-    "connect-session-firestore": "^1.0.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "express-rate-limit": "^7.5.0",
@@ -11,7 +10,7 @@
     "helmet": "^8.1.0"
   },
   "scripts": {
-    "start": "node server.js",
-    "build": "echo 'No build step required'"
+    "start": "node index.js",
+    "build": "npm ci"
   }
 }
